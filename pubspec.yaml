@@ -1,0 +1,59 @@
+name: cracha_app
+description: "A new Flutter project."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  image_picker: ^1.2.2
+  pdf: ^3.12.0
+  path_provider: ^2.1.5
+  permission_handler: ^12.0.1
+  printing: ^5.14.0
+  auto_size_text: ^3.0.0
+  crop_image: 1.0.17
+  shared_preferences: ^2.2.2
+  provider: ^6.1.2
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/brasao.png
+    - assets/images/CRACHA.png
+    - assets/images/placeholder.png
+
+  fonts:
+    - family: Rawline
+      fonts:
+        - asset: assets/rawline/rawline-100.ttf
+          weight: 100
+        - asset: assets/rawline/rawline-200.ttf
+          weight: 200
+        - asset: assets/rawline/rawline-300.ttf
+          weight: 300
+        - asset: assets/rawline/rawline-400.ttf
+          weight: 400
+        - asset: assets/rawline/rawline-500.ttf
+          weight: 500
+        - asset: assets/rawline/rawline-600.ttf
+          weight: 600  
+        - asset: assets/rawline/rawline-700.ttf
+          weight: 700
+        - asset: assets/rawline/rawline-800.ttf
+          weight: 800
+        - asset: assets/rawline/rawline-900.ttf
+          weight: 900
