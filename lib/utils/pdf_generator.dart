@@ -105,8 +105,24 @@ class PdfGenerator {
       updateProgress(0.2, 'Capturando a imagem do crachá...');
       await Future.delayed(const Duration(milliseconds: 300));
 
-      final boundary =
-          key.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      // Espera até que o RepaintBoundary esteja disponível
+      RenderRepaintBoundary? boundary;
+      for (int i = 0; i < 20; i++) {
+        final ctx = key.currentContext;
+        if (ctx != null && ctx.mounted) {
+          final ro = ctx.findRenderObject();
+          if (ro is RenderRepaintBoundary) {
+            boundary = ro;
+            break;
+          }
+        }
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+
+      if (boundary == null) {
+        throw Exception('Não foi possível capturar o crachá. Tente novamente.');
+      }
+
       final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
 
       updateProgress(0.4, 'Processando a imagem...');
@@ -140,18 +156,27 @@ class PdfGenerator {
       // Define o nome do arquivo baseado no nome e secretaria do usuário
       String filename = 'cracha.pdf';
       if (badgeData != null) {
-        if (badgeData.name.isNotEmpty) {
-          String name = badgeData.name.trim();
-          String department = badgeData.department.trim();
+        String name = badgeData.name.trim();
+        String department = badgeData.department.trim();
 
-          // Se ambos nome e secretaria estão presentes
-          if (name.isNotEmpty && department.isNotEmpty) {
-            filename = '$name - $department.pdf';
-          }
-          // Se apenas o nome está presente
-          else if (name.isNotEmpty) {
-            filename = '$name.pdf';
-          }
+        // Sanitiza: remove caracteres inválidos para filename
+        String sanitize(String s) => s
+            .replaceAll('/', '-')
+            .replaceAll('\\', '-')
+            .replaceAll(':', '-')
+            .replaceAll('*', '-')
+            .replaceAll('?', '-')
+            .replaceAll('"', '-')
+            .replaceAll('<', '-')
+            .replaceAll('>', '-')
+            .replaceAll('|', '-');
+
+        if (name.isNotEmpty && department.isNotEmpty) {
+          filename = '${sanitize(name)} - ${sanitize(department)}.pdf';
+        } else if (name.isNotEmpty) {
+          filename = '${sanitize(name)}.pdf';
+        } else if (department.isNotEmpty) {
+          filename = '${sanitize(department)}.pdf';
         }
       }
 

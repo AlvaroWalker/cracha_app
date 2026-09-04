@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:crop_image/crop_image.dart';
-import 'dart:ui' as ui;
 import '../models/badge_data.dart';
-import '../utils/app_colors.dart';
+import '../views/photo_edit_dialog.dart';
 
 class BadgeController {
   final BadgeData badgeData;
@@ -46,9 +44,13 @@ class BadgeController {
       // Se o usuário cancelou a seleção
       if (source == null) return null;
 
-      // Selecionar a imagem da fonte escolhida
+      // Selecionar a imagem da fonte escolhida.
+      // Reduzida para 1024px: suficiente para o crachá (153x189 @3x no PDF)
+      // e evita fotos de vários MB no upload + base64 local.
       final XFile? pickedFile = await _picker.pickImage(
         source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
         imageQuality: 80,
       );
       if (!context.mounted) return null;
@@ -98,99 +100,11 @@ class BadgeController {
 
   Future<Uint8List?> _cropImage(XFile pickedFile, BuildContext context) async {
     try {
-      final controller = CropController(
-        aspectRatio: 3 / 4,
-        defaultCrop: const Rect.fromLTRB(0.1, 0.1, 0.9, 0.9),
-      );
-
       final imageBytes = await pickedFile.readAsBytes();
 
-      // Mostra o diálogo de recorte com a imagem
+      // Diálogo premium de ajuste e recorte
       if (!context.mounted) return null;
-      final croppedBytes = await showDialog<Uint8List>(
-        context: context,
-        builder: (context) => Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          backgroundColor: Colors.white,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: const Text(
-                  'Ajustar Foto do Crachá',
-                  style: TextStyle(
-                    fontFamily: 'Rawline',
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryColor,
-                  ),
-                ),
-              ),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.5,
-                width: MediaQuery.of(context).size.width * 0.8,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: CropImage(
-                    controller: controller,
-                    image: Image.memory(imageBytes),
-                    gridColor: AppColors.primaryColor,
-                    gridCornerSize: 25,
-                    gridThinWidth: 2,
-                    gridThickWidth: 2,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              OverflowBar(
-                alignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      'Cancelar',
-                      style: TextStyle(
-                        fontFamily: 'Rawline',
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.subtitleColor,
-                      ),
-                    ),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    ),
-                    onPressed: () async {
-                      final bitmap = await controller.croppedBitmap();
-                      final data = await bitmap.toByteData(
-                          format: ui.ImageByteFormat.png);
-                      if (context.mounted) {
-                        Navigator.pop(context, data!.buffer.asUint8List());
-                      }
-                    },
-                    child: const Text(
-                      'Recortar',
-                      style: TextStyle(
-                        fontFamily: 'Rawline',
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
-      );
+      final croppedBytes = await showPhotoEditDialog(context, imageBytes);
 
       return croppedBytes;
     } catch (e) {

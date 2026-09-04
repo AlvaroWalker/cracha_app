@@ -28,11 +28,21 @@ class BadgeStorageService {
         badgeList.add(badge);
       }
 
-      // Salvar lista atualizada
-      final badgeJsonList =
-          badgeList.map((b) => jsonEncode(b.toMap())).toList();
-      await prefs.setStringList(_badgeListKey, badgeJsonList);
-      return true;
+      // Salvar lista atualizada. Se estourar a cota do localStorage,
+      // tenta descartar as fotos (mantém os dados) antes de desistir.
+      bool saved;
+      try {
+        final badgeJsonList =
+            badgeList.map((b) => jsonEncode(b.toMap())).toList();
+        saved = await prefs.setStringList(_badgeListKey, badgeJsonList);
+        if (!saved) throw Exception('setStringList retornou false');
+      } catch (_) {
+        // Cota excedida: salva sem as fotos (dados preservados)
+        final badgeSemFoto =
+            badgeList.map((b) => jsonEncode(b.toMapSemFoto())).toList();
+        saved = await prefs.setStringList(_badgeListKey, badgeSemFoto);
+      }
+      return saved;
     } catch (e) {
       debugPrint('Erro ao salvar crachá: $e');
       return false;
@@ -53,6 +63,27 @@ class BadgeStorageService {
     } catch (e) {
       debugPrint('Erro ao obter lista de crachás: $e');
       return [];
+    }
+  }
+
+  // Substitui toda a lista local (espelho da nuvem)
+  static Future<bool> replaceAll(List<BadgeData> badges) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      // Tenta salvar com fotos primeiro
+      try {
+        final badgeJsonList = badges.map((b) => jsonEncode(b.toMap())).toList();
+        await prefs.setStringList(_badgeListKey, badgeJsonList);
+        return true;
+      } catch (_) {
+        // Cota excedida: salva sem fotos (dados preservados)
+        final badgeSemFoto = badges.map((b) => jsonEncode(b.toMapSemFoto())).toList();
+        await prefs.setStringList(_badgeListKey, badgeSemFoto);
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Erro ao substituir lista local: $e');
+      return false;
     }
   }
 

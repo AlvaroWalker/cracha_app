@@ -22,6 +22,8 @@ dependencies:
   shared_preferences: ^2.2.2
   provider: ^6.1.2
   intl: ^0.20.2
+  supabase_flutter: ^2.8.0
+  http: ^1.2.0
 
 dev_dependencies:
   flutter_test:
@@ -35,6 +37,7 @@ flutter:
     - assets/brasao.png
     - assets/images/CRACHA.png
     - assets/images/placeholder.png
+    - assets/data/servidores.csv
 
   fonts:
     - family: Rawline

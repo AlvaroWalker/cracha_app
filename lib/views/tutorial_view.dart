@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import '../utils/app_colors.dart';
-import '../utils/app_animations.dart';
 
+import '../utils/app_animations.dart';
+import '../utils/app_tokens.dart';
+import '../views/app_button.dart';
+
+/// Tutorial em 5 etapas curtas: Criar → Servidor → Foto → Conferir → PDF.
+/// Mesma API pública de antes ([onClose]).
 class TutorialView extends StatefulWidget {
   final VoidCallback onClose;
 
@@ -11,102 +15,148 @@ class TutorialView extends StatefulWidget {
   State<TutorialView> createState() => _TutorialViewState();
 }
 
-class _TutorialViewState extends State<TutorialView>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
+class _TutorialViewState extends State<TutorialView> {
+  final PageController _pages = PageController();
+  int _index = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    )..forward();
-  }
+  static const _steps = [
+    _TutorialStep(
+      icon: Icons.add_circle_outline_rounded,
+      title: 'Criar',
+      description:
+          'Toque em Novo no topo do Emissor para começar um crachá do zero.',
+    ),
+    _TutorialStep(
+      icon: Icons.person_search_rounded,
+      title: 'Selecionar servidor',
+      description:
+          'Busque o servidor pelo nome. Cargo e secretaria preenchem sozinhos — e continuam editáveis.',
+    ),
+    _TutorialStep(
+      icon: Icons.photo_camera_outlined,
+      title: 'Adicionar fotografia',
+      description:
+          'Use uma foto frontal e bem iluminada. Dá para editar, ajustar e até remover o fundo.',
+    ),
+    _TutorialStep(
+      icon: Icons.visibility_outlined,
+      title: 'Conferir crachá',
+      description:
+          'A pré-visualização atualiza em tempo real. O que você vê é o que sai no PDF.',
+    ),
+    _TutorialStep(
+      icon: Icons.picture_as_pdf_outlined,
+      title: 'Gerar PDF',
+      description:
+          'Toque em Gerar PDF para salvar ou compartilhar. Na galeria dá para gerar vários de uma vez.',
+    ),
+  ];
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _pages.dispose();
     super.dispose();
+  }
+
+  void _goTo(int i) {
+    _pages.animateToPage(
+      i,
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOut,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Verifica se o dispositivo é um tablet/desktop ou celular
-    final isLargeScreen = MediaQuery.of(context).size.width > 600;
-
+    final last = _index == _steps.length - 1;
     return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryColor,
-        title: const Text('Como usar o Gerador de Crachá'),
+        title: const Text('Tutorial'),
         leading: IconButton(
           icon: const Icon(Icons.close),
+          tooltip: 'Fechar tutorial',
           onPressed: widget.onClose,
         ),
+        actions: [
+          if (!last)
+            AppButton.text(
+              label: 'Pular',
+              onPressed: widget.onClose,
+            ),
+        ],
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(isLargeScreen ? 30.0 : 16.0),
+      body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: isLargeScreen ? 800 : 600),
+            constraints: const BoxConstraints(maxWidth: 560),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader('Bem-vindo ao Gerador de Crachá!'),
-                const SizedBox(height: 20),
-                _buildSection(
-                  'Como adicionar uma foto:',
-                  'Toque na área da foto para escolher uma imagem da galeria',
-                  Icons.image,
-                  0,
-                ),
-                _buildSection(
-                  'Como editar o nome:',
-                  'Toque no nome para editar e personalizar o crachá',
-                  Icons.edit,
-                  1,
-                ),
-                _buildSection(
-                  'Como alterar a função:',
-                  'Toque na função atual para alterar para o cargo correto',
-                  Icons.work,
-                  2,
-                ),
-                _buildSection(
-                  'Como selecionar a secretaria:',
-                  'Toque no nome da secretaria para selecionar a correta na lista',
-                  Icons.business,
-                  3,
-                ),
-                _buildSection(
-                  'Como exportar o crachá:',
-                  'Use o botão flutuante de PDF para gerar e compartilhar seu crachá',
-                  Icons.picture_as_pdf,
-                  4,
-                ),
-                const SizedBox(height: 30),
-                Center(
-                  child: AppAnimations.animatedListItem(
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.check_circle_outline),
-                      label: const Text('Começar a usar'),
-                      onPressed: widget.onClose,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 40, vertical: 15),
-                        backgroundColor: AppColors.primaryColor,
-                        foregroundColor: Colors.white,
-                        textStyle: const TextStyle(
-                          fontSize: 16,
+                const SizedBox(height: AppSpacing.md),
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Etapa ${_index + 1} de ${_steps.length}',
+                        style: const TextStyle(
+                          fontFamily: 'Rawline',
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ),
-                    5,
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.full),
+                          child: LinearProgressIndicator(
+                            value: (_index + 1) / _steps.length,
+                            minHeight: 6,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: AppSpacing.lg),
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pages,
+                    itemCount: _steps.length,
+                    onPageChanged: (i) => setState(() => _index = i),
+                    itemBuilder: (context, i) =>
+                        _StepBody(step: _steps[i], number: i + 1),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.xl),
+                  child: Row(
+                    children: [
+                      if (_index > 0)
+                        AppButton.text(
+                          label: 'Voltar',
+                          icon: Icons.arrow_back_rounded,
+                          onPressed: () => _goTo(_index - 1),
+                        )
+                      else
+                        const SizedBox(width: 8),
+                      const Spacer(),
+                      AppAnimations.animatedListItem(
+                        AppButton.primary(
+                          label: last ? 'Concluir' : 'Próximo',
+                          icon: last
+                              ? Icons.check_circle_outline_rounded
+                              : Icons.arrow_forward_rounded,
+                          onPressed: last
+                              ? widget.onClose
+                              : () => _goTo(_index + 1),
+                        ),
+                        _index,
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -114,88 +164,121 @@ class _TutorialViewState extends State<TutorialView>
       ),
     );
   }
+}
 
-  Widget _buildHeader(String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0),
-      child: AnimatedBuilder(
-        animation: _animationController,
-        builder: (context, child) {
-          return Opacity(
-            opacity: _animationController.value,
-            child: Transform.translate(
-              offset: Offset(0, 20 * (1 - _animationController.value)),
-              child: Text(
-                text,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primaryColor,
+class _TutorialStep {
+  final IconData icon;
+  final String title;
+  final String description;
+
+  const _TutorialStep({
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
+}
+
+/// Conteúdo de uma etapa: ilustração abstrata + título + descrição.
+class _StepBody extends StatelessWidget {
+  final _TutorialStep step;
+  final int number;
+
+  const _StepBody({required this.step, required this.number});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+      child: Column(
+        children: [
+          ExcludeSemantics(
+            child: Container(
+              height: 220,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+                border: Border.all(
+                  color: primary.withValues(alpha: 0.14),
                 ),
               ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Barras abstratas ao fundo (sugestão de interface).
+                  Positioned(
+                    left: 28,
+                    right: 28,
+                    child: Column(
+                      children: [
+                        _bar(primary, 0.9, 14),
+                        const SizedBox(height: 10),
+                        _bar(primary, 0.65, 10),
+                        const SizedBox(height: 10),
+                        _bar(primary, 0.75, 10),
+                      ],
+                    ),
+                  ),
+                  // Selo da etapa em destaque.
+                  Container(
+                    padding: const EdgeInsets.all(22),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: primary.withValues(alpha: 0.18),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Icon(step.icon, size: 44, color: primary),
+                  ),
+                ],
+              ),
             ),
-          );
-        },
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Text(
+            '$number. ${step.title}',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Rawline',
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: theme.textTheme.titleLarge?.color,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            step.description,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Rawline',
+              fontSize: 15,
+              height: 1.5,
+              color: theme.textTheme.bodyMedium?.color
+                  ?.withValues(alpha: 0.75),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildSection(
-      String title, String description, IconData icon, int index) {
-    return AppAnimations.animatedListItem(
-      Card(
-        margin: const EdgeInsets.symmetric(vertical: 10),
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            gradient: LinearGradient(
-              colors: [Colors.white, AppColors.lightGreen.withValues(alpha: 0.3)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(icon, color: AppColors.primaryColor, size: 28),
-                  ),
-                  const SizedBox(width: 14),
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primaryColor,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Text(
-                description,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textColor.withValues(alpha: 0.8),
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
+  Widget _bar(Color color, double widthFactor, double height) {
+    return FractionallySizedBox(
+      widthFactor: widthFactor,
+      child: Container(
+        height: height,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(AppRadius.full),
         ),
       ),
-      index,
-      delay: const Duration(milliseconds: 100),
     );
   }
 }
