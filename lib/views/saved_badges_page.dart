@@ -12,7 +12,9 @@ import '../utils/app_tokens.dart';
 import '../utils/multi_badge_pdf_generator.dart';
 import 'app_button.dart';
 import 'badge_view.dart';
+import 'saved_badges_empty_state.dart';
 import 'saved_badges_filter.dart';
+import 'saved_badges_filter_sheets.dart';
 
 /// Galeria e Hub de Gestão de Crachás Emitidos.
 ///
@@ -91,6 +93,11 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
     } else {
       Navigator.of(context).pop();
     }
+  }
+
+  void _criarNovoCracha() {
+    context.read<BadgeManager>().createNewBadge();
+    _goBack();
   }
 
   void _voltarParaEdicao(BadgeData badge) {
@@ -370,7 +377,12 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                         isActive: _secretariaFiltro != null,
                         isDark: isDark,
                         primary: primary,
-                        onTap: () => _showSecretariaPicker(context, secretariasContagem),
+                        onTap: () => SavedBadgesSheets.showSecretariaPicker(
+                          context,
+                          contagem: secretariasContagem,
+                          selecionada: _secretariaFiltro,
+                          onSelect: (val) => setState(() => _secretariaFiltro = val),
+                        ),
                       ),
                       const SizedBox(width: 8),
 
@@ -381,7 +393,7 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                         isActive: _ordenacao != SavedBadgesOptions.ordenacaoPadrao,
                         isDark: isDark,
                         primary: primary,
-                        onTap: () => _showOptionsModal(
+                        onTap: () => SavedBadgesSheets.showOptionsModal(
                           context,
                           title: 'Ordenar por',
                           options: SavedBadgesOptions.ordenacaoLabels,
@@ -398,7 +410,7 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                         isActive: _periodoData != SavedBadgesOptions.periodoPadrao,
                         isDark: isDark,
                         primary: primary,
-                        onTap: () => _showOptionsModal(
+                        onTap: () => SavedBadgesSheets.showOptionsModal(
                           context,
                           title: 'Filtrar por data',
                           options: SavedBadgesOptions.periodoLabels,
@@ -473,7 +485,12 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
             child: bm.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : filteredBadges.isEmpty
-                    ? _buildEmptyState(context, isDark)
+                    ? SavedBadgesEmptyState(
+                        hasActiveFilters: _temFiltrosAtivos,
+                        isDark: isDark,
+                        onClearFilters: _limparFiltros,
+                        onCreateNew: _criarNovoCracha,
+                      )
                     : _isTableView
                         ? _buildTableView(context, filteredBadges, bm)
                         : _buildGridView(context, filteredBadges, bm),
@@ -570,68 +587,6 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
             ),
             const SizedBox(width: 4),
             Icon(Icons.arrow_drop_down_rounded, size: 18, color: isActive ? primary : AppColors.subtitleColor),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context, bool isDark) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: (isDark ? AppColors.darkSurfaceVariant : AppColors.surfaceSubtle),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                _temFiltrosAtivos ? Icons.search_off_rounded : Icons.badge_outlined,
-                size: 56,
-                color: isDark ? AppColors.darkHint : AppColors.subtitleColor,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Text(
-              _temFiltrosAtivos ? 'Nenhum crachá encontrado' : 'Nenhum crachá salvo ainda',
-              style: const TextStyle(
-                fontFamily: 'Rawline',
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              _temFiltrosAtivos
-                  ? 'Tente ajustar ou limpar os filtros de busca aplicados.'
-                  : 'Crie seu primeiro crachá funcional no estúdio para gerenciar e imprimir.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Rawline',
-                fontSize: 13,
-                color: isDark ? AppColors.darkTextSecondary : AppColors.subtitleColor,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            if (_temFiltrosAtivos)
-              AppButton.secondary(
-                label: 'Limpar todos os filtros',
-                icon: Icons.filter_alt_off_rounded,
-                onPressed: _limparFiltros,
-              )
-            else
-              AppButton.primary(
-                label: 'Criar Novo Crachá',
-                icon: Icons.add_rounded,
-                onPressed: () {
-                  context.read<BadgeManager>().createNewBadge();
-                  Navigator.of(context).pop();
-                },
-              ),
           ],
         ),
       ),
@@ -774,108 +729,6 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
               ],
             ),
             onTap: () => _voltarParaEdicao(badge),
-          ),
-        );
-      },
-    );
-  }
-
-  // ── Modais de Filtro ──
-  void _showSecretariaPicker(BuildContext context, Map<String, int> contagem) {
-    showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(20, 8, 20, 12),
-                child: Text(
-                  'Filtrar por Secretaria',
-                  style: TextStyle(fontFamily: 'Rawline', fontSize: 16, fontWeight: FontWeight.w800),
-                ),
-              ),
-              const Divider(height: 1),
-              ListTile(
-                title: const Text('Todas as Secretarias', style: TextStyle(fontFamily: 'Rawline')),
-                selected: _secretariaFiltro == null,
-                trailing: _secretariaFiltro == null ? const Icon(Icons.check_rounded) : null,
-                onTap: () {
-                  setState(() => _secretariaFiltro = null);
-                  Navigator.pop(ctx);
-                },
-              ),
-              Expanded(
-                child: ListView(
-                  children: [
-                    for (final entry in contagem.entries)
-                      ListTile(
-                        title: Text(entry.key, style: const TextStyle(fontFamily: 'Rawline', fontSize: 13.5)),
-                        trailing: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text('${entry.value}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                        ),
-                        selected: _secretariaFiltro == entry.key,
-                        onTap: () {
-                          setState(() => _secretariaFiltro = entry.key);
-                          Navigator.pop(ctx);
-                        },
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showOptionsModal(
-    BuildContext context, {
-    required String title,
-    required Map<String, String> options,
-    required String currentValue,
-    required ValueChanged<String> onSelect,
-  }) {
-    showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                child: Text(title, style: const TextStyle(fontFamily: 'Rawline', fontSize: 16, fontWeight: FontWeight.w800)),
-              ),
-              const Divider(height: 1),
-              for (final e in options.entries)
-                ListTile(
-                  title: Text(e.value, style: const TextStyle(fontFamily: 'Rawline')),
-                  selected: e.key == currentValue,
-                  trailing: e.key == currentValue ? const Icon(Icons.check_rounded) : null,
-                  onTap: () {
-                    onSelect(e.key);
-                    Navigator.pop(ctx);
-                  },
-                ),
-            ],
           ),
         );
       },
