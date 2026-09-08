@@ -87,16 +87,21 @@ class _BootShellState extends State<_BootShell> {
 
   @override
   Widget build(BuildContext context) {
+    // IndexedStack: as 5 abas ficam MONTADAS — trocar de aba não destrói
+    // o formulário em edição nem a busca da galeria. Ordem = AppShell._navItems.
     return AppShell(
       currentRoute: _route,
       onNavigate: _go,
-      child: switch (_route) {
-        'crachas' => SavedBadgesPage(onBack: _goEmissor),
-        'tutorial' => TutorialView(onClose: _goEmissor),
-        'tema' => const ThemePage(),
-        'conta' => const AccountPage(),
-        _ => const HomePage(),
-      },
+      child: IndexedStack(
+        index: AppShell.indexFor(_route),
+        children: [
+          const HomePage(),
+          SavedBadgesPage(onBack: _goEmissor),
+          TutorialView(onClose: _goEmissor),
+          const ThemePage(),
+          const AccountPage(),
+        ],
+      ),
     );
   }
 }
