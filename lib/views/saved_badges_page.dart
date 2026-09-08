@@ -483,7 +483,11 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
           // ── Lista de Conteúdo (Grade ou Tabela) ──
           Expanded(
             child: bm.isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(
+                    child: CircularProgressIndicator(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  )
                 : filteredBadges.isEmpty
                     ? SavedBadgesEmptyState(
                         hasActiveFilters: _temFiltrosAtivos,

@@ -313,19 +313,19 @@ class _MobileBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Altura adaptativa (60% da tela, 440..640) em vez de 480 fixo —
+    // não aperta em celular pequeno nem desperdiça em telão.
+    final previewH =
+        (MediaQuery.sizeOf(context).height * 0.6).clamp(440.0, 640.0);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpace.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Preview no topo (dentro do editor/mobile).
-          LayoutBuilder(
-            builder: (context, cons) {
-              return SizedBox(
-                height: 480,
-                child: PreviewPanel(globalKey: globalKey),
-              );
-            },
+          SizedBox(
+            height: previewH,
+            child: PreviewPanel(globalKey: globalKey),
           ),
           const SizedBox(height: AppSpace.lg),
           // Editor (sem preview, sem inspector).
