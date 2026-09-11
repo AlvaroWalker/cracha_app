@@ -6,6 +6,7 @@ import '../../models/badge_data.dart';
 import '../../services/badge_manager.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_tokens.dart';
+import '../../utils/native_pdf_generator.dart';
 import '../../utils/pdf_generator.dart';
 import '../../views/badge_design.dart';
 
@@ -315,40 +316,53 @@ class _PdfButton extends StatelessWidget {
     final brand = isDark ? AppColors.brandDark : AppColors.brandLight;
     final onBrand = isDark ? AppColors.textDark : Colors.white;
 
-    return SizedBox(
-      width: double.infinity,
-      child: Material(
-        color: brand,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          onTap: () => PdfGenerator.generateAndSharePdf(
-            globalKey,
-            context,
-            badgeData: badge,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.picture_as_pdf_rounded, size: 18, color: onBrand),
-                const SizedBox(width: AppSpace.sm),
-                Text(
-                  'Gerar PDF',
-                  style: TextStyle(
-                    fontFamily: 'Rawline',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: onBrand,
-                  ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: Material(
+            color: brand,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              onTap: () => PdfGenerator.generateAndSharePdf(
+                globalKey,
+                context,
+                badgeData: badge,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.picture_as_pdf_rounded, size: 18, color: onBrand),
+                    const SizedBox(width: AppSpace.sm),
+                    Text(
+                      'Gerar PDF',
+                      style: TextStyle(
+                        fontFamily: 'Rawline',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: onBrand,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
-      ),
+        // TESTE (branch teste-pdf-vetorizado): PDF vetorial lado a lado.
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: () => NativePdfGenerator.generateAndSharePdf(badge),
+          icon: const Icon(Icons.description_outlined, size: 18),
+          label: const Text('PDF Vetor (TESTE)'),
+        ),
+      ],
     );
   }
 }
