@@ -352,6 +352,16 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                         ),
                       ),
                     ),
+                    if (filteredBadges.isNotEmpty &&
+                        selectedIds.length < bm.badges.length) ...[
+                      const SizedBox(width: 8),
+                      AppButton.text(
+                        label: 'Todos',
+                        icon: Icons.select_all_rounded,
+                        size: AppButtonSize.sm,
+                        onPressed: () => bm.selectAllBadges(),
+                      ),
+                    ],
                     if (_temFiltrosAtivos) ...[
                       const SizedBox(width: AppSpacing.sm),
                       AppButton.text(
