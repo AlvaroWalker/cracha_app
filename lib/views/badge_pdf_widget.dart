@@ -65,9 +65,12 @@ class BadgePdfWidget {
     // Largura útil de texto dentro do cartão de info (desconta padding
     // lateral equivalente ao que o Divider aplicava com indent/endIndent).
     // O Container do cartão branco (_buildInfoSection no original) não
-    // tem padding horizontal — a largura útil do texto é infoWidth cheio.
-    // Só um respiro mínimo pra não colar no canto arredondado.
-    final textMaxWidth = infoWidth - pxW(4);
+    // tem padding horizontal — e o widget deixa o texto vazar ~5px p/
+    // cada lado sobre o fundo branco (invisível). Aqui a tolerância é
+    // maior (+12px/lado) porque as métricas do pacote pdf medem a Rawline
+    // um pouco mais larga que o Flutter — sem isso o nome quebra em
+    // 2 linhas onde na tela cabe 1.
+    final textMaxWidth = infoWidth + pxW(24);
 
     return pw.SizedBox(
       width: cardWidth,
@@ -196,10 +199,17 @@ class BadgePdfWidget {
     const step = 0.5;
     double fontSize = maxFontSize;
 
+    // O stringMetrics retorna 0.0 para ESPAÇO (probe: A=0.663, sp=0.0) —
+    // sem compensar, textos com muitos espaços passam no fits() e
+    // estouram no render (cauda cortada). Espaço de grotesca ≈ 0.3em.
+    const spaceFactor = 0.3;
+
     double lineWidth(String line, double size) {
       // stringMetrics é normalizado a fontSize=1 — width * size = pt real.
       final metrics = metricsFont.stringMetrics(line);
+      final spaces = line.runes.where((r) => r == 0x20).length;
       return metrics.width * size +
+          spaces * size * spaceFactor +
           (line.isEmpty ? 0 : (line.length - 1)) * letterSpacing;
     }
 
