@@ -6,8 +6,8 @@ import '../../models/badge_data.dart';
 import '../../services/badge_manager.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_tokens.dart';
-import '../../utils/native_pdf_generator.dart';
 import '../../utils/pdf_generator.dart';
+import '../../utils/pdf_vector_generator.dart';
 import '../../views/badge_design.dart';
 
 /// Pré-visualização do crachá (Linear-like).
@@ -358,7 +358,10 @@ class _PdfButton extends StatelessWidget {
         // TESTE (branch teste-pdf-vetorizado): PDF vetorial lado a lado.
         const SizedBox(height: 8),
         OutlinedButton.icon(
-          onPressed: () => NativePdfGenerator.generateAndSharePdf(badge),
+          onPressed: () => PdfVectorGenerator.generateAndSharePdf(
+            context,
+            badgeData: badge,
+          ),
           icon: const Icon(Icons.description_outlined, size: 18),
           label: const Text('PDF Vetor (TESTE)'),
         ),
