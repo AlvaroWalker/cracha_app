@@ -269,4 +269,49 @@ class PdfGenerator {
       );
     }
   }
+
+  /// Captura o crachá e monta o PDF, devolvendo os bytes (sem diálogos).
+  ///
+  /// Usado pelo preview antes de compartilhar. Separado de
+  /// [generateAndSharePdf] de propósito para não mexer no fluxo que
+  /// já funciona.
+  static Future<Uint8List> buildBadgePdfBytes(
+    GlobalKey key, {
+    BadgeData? badgeData,
+  }) async {
+    RenderRepaintBoundary? boundary;
+    for (int i = 0; i < 20; i++) {
+      final ctx = key.currentContext;
+      if (ctx != null && ctx.mounted) {
+        final ro = ctx.findRenderObject();
+        if (ro is RenderRepaintBoundary) {
+          boundary = ro;
+          break;
+        }
+      }
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+    if (boundary == null) {
+      throw Exception('Não foi possível capturar o crachá. Tente novamente.');
+    }
+
+    // 300 DPI (mesmo padrão do compartilhamento).
+    const exportPixelRatio = 300 / 96;
+    final ui.Image image =
+        await boundary.toImage(pixelRatio: exportPixelRatio);
+    final ByteData? byteData =
+        await image.toByteData(format: ui.ImageByteFormat.png);
+    final Uint8List imageBytes = byteData!.buffer.asUint8List();
+
+    final pdf = pw.Document();
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat(54 * (72 / 25.4), 85 * (72 / 25.4)),
+        build: (context) => pw.Center(
+          child: pw.Image(pw.MemoryImage(imageBytes), fit: pw.BoxFit.cover),
+        ),
+      ),
+    );
+    return pdf.save();
+  }
 }

@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/badge_controller.dart';
@@ -309,6 +312,50 @@ class _PdfButton extends StatelessWidget {
 
   const _PdfButton({required this.globalKey, required this.badge});
 
+  /// Popup de preview: mostra o PDF antes de baixar/compartilhar.
+  void _showPreview(BuildContext context) {
+    final future =
+        PdfGenerator.buildBadgePdfBytes(globalKey, badgeData: badge);
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        insetPadding: const EdgeInsets.all(16),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560, maxHeight: 720),
+          child: FutureBuilder<Uint8List>(
+            future: future,
+            builder: (ctx, snap) {
+              if (snap.hasError) {
+                return const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text(
+                    'Não foi possível gerar a pré-visualização. Tente novamente.',
+                    textAlign: TextAlign.center,
+                  ),
+                );
+              }
+              if (!snap.hasData) {
+                return const SizedBox(
+                  height: 320,
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              final bytes = snap.data!;
+              return PdfPreview(
+                build: (_) async => bytes,
+                allowSharing: true,
+                allowPrinting: true,
+                canChangePageFormat: false,
+                canDebug: false,
+                pdfFileName: 'cracha.pdf',
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -327,11 +374,7 @@ class _PdfButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.md),
             child: InkWell(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              onTap: () => PdfGenerator.generateAndSharePdf(
-                globalKey,
-                context,
-                badgeData: badge,
-              ),
+              onTap: () => _showPreview(context),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 child: Row(
