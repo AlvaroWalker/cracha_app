@@ -127,14 +127,15 @@ class MultiBadgePdfGenerator {
         final Uint8List badgeImageBytes =
             await _captureBadgeAsImage(badge, context);
 
-        // Adiciona uma página ao PDF com a imagem do crachá
+        // Adiciona uma página ao PDF com a imagem do crachá.
+        // COVER preenche 54×85 exatos (contain encolhia p/ ~83mm — ver pdf_generator).
         pdf.addPage(
           pw.Page(
             pageFormat: pageFormat,
             build: (pw.Context pdfContext) => pw.Center(
               child: pw.Image(
                 pw.MemoryImage(badgeImageBytes),
-                fit: pw.BoxFit.contain,
+                fit: pw.BoxFit.cover,
               ),
             ),
           ),

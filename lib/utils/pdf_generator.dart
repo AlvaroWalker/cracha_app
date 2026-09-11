@@ -141,8 +141,11 @@ class PdfGenerator {
       pdf.addPage(
         pw.Page(
           pageFormat: PdfPageFormat(54 * (72 / 25.4), 85 * (72 / 25.4)),
+          // COVER (não contain): a captura preserva a proporção do crachá
+          // (1.569) e o contain encolhia para 83.1mm; cover preenche 54×85
+          // exatos cortando ~0.15mm de margem branca invisível.
           build: (context) => pw.Center(
-            child: pw.Image(pw.MemoryImage(imageBytes), fit: pw.BoxFit.contain),
+            child: pw.Image(pw.MemoryImage(imageBytes), fit: pw.BoxFit.cover),
           ),
         ),
       );
