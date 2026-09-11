@@ -197,10 +197,6 @@ class _WorkspaceHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final muted = isDark ? AppColors.mutedDark : AppColors.mutedLight;
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpace.lg,
@@ -208,36 +204,12 @@ class _WorkspaceHeader extends StatelessWidget {
         AppSpace.sm,
         AppSpace.sm,
       ),
+      // Só ações: o título "Emissor" já vem do AppShell (AppBar no mobile,
+      // _TopBar no desktop) — repetir aqui duplicava o cabeçalho.
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Emissor',
-                  style: TextStyle(
-                    fontFamily: 'Rawline',
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Crie e edite crachás institucionais',
-                  style: TextStyle(
-                    fontFamily: 'Rawline',
-                    fontSize: 13,
-                    color: muted,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          const Spacer(),
           AppButton.secondary(
             label: 'Novo',
             icon: Icons.add_rounded,
