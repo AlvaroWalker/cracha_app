@@ -43,6 +43,10 @@ class BadgeGeometry {
 }
 
 /// Fontes do crachá — VALORES DO REPO FUNCIONAL. Não "modernizar".
+///
+/// Cor fixada em PRETO de propósito: o cartão do crachá é sempre branco,
+/// então herdar a cor do tema (branco no modo escuro) apagava os dados
+/// e saía branco até no PDF.
 class BadgeTextStyles {
   BadgeTextStyles._();
 
@@ -52,6 +56,7 @@ class BadgeTextStyles {
     fontWeight: FontWeight.w700,
     height: 1.15,
     letterSpacing: 0,
+    color: Colors.black,
   );
 
   static const TextStyle role = TextStyle(
@@ -60,6 +65,7 @@ class BadgeTextStyles {
     fontWeight: FontWeight.w700,
     height: 1.15,
     letterSpacing: 0,
+    color: Colors.black,
   );
 
   static const TextStyle department = TextStyle(
@@ -68,6 +74,7 @@ class BadgeTextStyles {
     fontWeight: FontWeight.w700,
     height: 1.15,
     letterSpacing: 0.2,
+    color: Colors.black,
   );
 }
 
