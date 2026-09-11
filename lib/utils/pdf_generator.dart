@@ -123,7 +123,11 @@ class PdfGenerator {
         throw Exception('Não foi possível capturar o crachá. Tente novamente.');
       }
 
-      final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      // 300 DPI: pixel lógico web = 1/96in → pixelRatio 300/96 = 3.125.
+      // Pior caso (palco mobile 220px) ainda sai a ~323 DPI no impresso.
+      const exportPixelRatio = 300 / 96;
+      final ui.Image image =
+          await boundary.toImage(pixelRatio: exportPixelRatio);
 
       updateProgress(0.4, 'Processando a imagem...');
       await Future.delayed(const Duration(milliseconds: 200));

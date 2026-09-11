@@ -296,7 +296,10 @@ class _BadgeCaptureWidgetState extends State<_BadgeCaptureWidget> {
       
       final boundary =
           _captureKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      // 300 DPI (ver pdf_generator): captura fixa em 333.4px → ~490 DPI.
+      const exportPixelRatio = 300 / 96;
+      final ui.Image image =
+          await boundary.toImage(pixelRatio: exportPixelRatio);
       final ByteData? byteData =
           await image.toByteData(format: ui.ImageByteFormat.png);
       final bytes = byteData!.buffer.asUint8List();
