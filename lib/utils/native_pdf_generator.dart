@@ -78,7 +78,8 @@ class NativePdfGenerator {
                     ),
                   ),
                   child: pw.ClipRRect(
-                    borderRadius: pw.BorderRadius.circular(13 * scaleX),
+                    horizontalRadius: 13 * scaleX,
+                    verticalRadius: 13 * scaleX,
                     child: pw.Image(
                       photoImage,
                       fit: pw.BoxFit.cover,
