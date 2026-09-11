@@ -122,14 +122,14 @@ class BadgeView extends StatelessWidget {
     return Stack(
       alignment: Alignment.center,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.asset(
-            'assets/images/CRACHA.png',
-            width: BadgeGeometry.cardWidth,
-            height: BadgeGeometry.cardHeight,
-            fit: BoxFit.contain,
-          ),
+        // Sem ClipRRect aqui DE PROPÓSITO: a arte já traz os cantos
+        // arredondados de fábrica; clipar de novo mordia os cantos
+        // (recorte branco visível no PDF exportado).
+        Image.asset(
+          'assets/images/CRACHA.png',
+          width: BadgeGeometry.cardWidth,
+          height: BadgeGeometry.cardHeight,
+          fit: BoxFit.contain,
         ),
         Positioned(
           top: BadgeGeometry.photoTop,
