@@ -64,7 +64,10 @@ class BadgePdfWidget {
 
     // Largura útil de texto dentro do cartão de info (desconta padding
     // lateral equivalente ao que o Divider aplicava com indent/endIndent).
-    final textMaxWidth = infoWidth - pxW(24);
+    // O Container do cartão branco (_buildInfoSection no original) não
+    // tem padding horizontal — a largura útil do texto é infoWidth cheio.
+    // Só um respiro mínimo pra não colar no canto arredondado.
+    final textMaxWidth = infoWidth - pxW(4);
 
     return pw.SizedBox(
       width: cardWidth,
