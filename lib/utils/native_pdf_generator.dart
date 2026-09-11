@@ -10,44 +10,85 @@ import '../views/badge_design.dart';
 
 /// Gerador VETORIAL de PDF (TESTE — branch `teste-pdf-vetorizado`).
 ///
-/// Diferença do [PdfGenerator]: em vez de capturar screenshot do widget,
-/// redesenha o crachá com primitivas do pacote `pdf` (texto real
-/// selecionável, vetores nítidos em qualquer zoom).
-///
-/// Geometria herdada de [BadgeGeometry] para manter proporção idêntica.
+/// Redesenha o crachá com primitivas do pacote `pdf` (texto real
+/// selecionável). Geometria herdada de [BadgeGeometry].
 class NativePdfGenerator {
   static Future<void> generateAndSharePdf(BadgeData badgeData) async {
-    final pdf = pw.Document();
+    final bgData = await rootBundle.load('assets/images/CRACHA.png');
 
-    // 1. Imagens dos assets (fundo + foto/placeholder).
-    final bgImageByteData = await rootBundle.load('assets/images/CRACHA.png');
-    final bgImage = pw.MemoryImage(bgImageByteData.buffer.asUint8List());
-
-    pw.ImageProvider photoImage;
+    Uint8List photoBytes;
     if (badgeData.photo != null) {
-      photoImage = pw.MemoryImage(badgeData.photo!);
+      photoBytes = badgeData.photo!;
     } else {
-      final placeholderByteData =
+      final placeholderData =
           await rootBundle.load('assets/images/placeholder.png');
-      photoImage = pw.MemoryImage(placeholderByteData.buffer.asUint8List());
+      photoBytes = placeholderData.buffer.asUint8List();
     }
 
-    // 2. Fonte Rawline Bold (mesmo arquivo do pubspec: rawline-700).
     final fontData = await rootBundle.load('assets/rawline/rawline-700.ttf');
+
+    final pdfBytes = await buildPdfBytes(
+      badgeData: badgeData,
+      bgBytes: bgData.buffer.asUint8List(),
+      photoBytes: photoBytes,
+      fontData: fontData,
+    );
+
+    await Printing.sharePdf(
+      bytes: pdfBytes,
+      filename: _sanitizeFilename(badgeData),
+    );
+  }
+
+  /// Monta o PDF de forma pura (sem platform channels) — testável.
+  static Future<Uint8List> buildPdfBytes({
+    required BadgeData badgeData,
+    required Uint8List bgBytes,
+    required Uint8List photoBytes,
+    required ByteData fontData,
+  }) async {
+    final pdf = pw.Document();
+
+    final bgImage = pw.MemoryImage(bgBytes);
+    final photoImage = pw.MemoryImage(photoBytes);
     final rawlineBold = pw.Font.ttf(fontData);
 
-    // 3. Escala: lógica 333.4×523.19 → 54×85mm do PDF.
+    // Escala: lógica 333.4×523.19 → 54×85mm do PDF.
     const double pdfWidth = 54 * PdfPageFormat.mm;
     const double pdfHeight = 85 * PdfPageFormat.mm;
 
     const double scaleX = pdfWidth / BadgeGeometry.cardWidth;
     const double scaleY = pdfHeight / BadgeGeometry.cardHeight;
 
+    // Largura interna do cartão branco (trava a quebra de linha dos textos).
+    const double infoW = BadgeGeometry.infoWidth * scaleX;
+
     final bool isNameEmpty = badgeData.name.trim().isEmpty;
     final bool isRoleEmpty = badgeData.role.trim().isEmpty;
     final bool isDeptEmpty = badgeData.department.trim().isEmpty;
 
-    // 4. Página com layout espelhado no BadgeView.
+    pw.Widget infoText(
+      String text, {
+      required double fontSize,
+      required bool isPlaceholder,
+    }) {
+      // SizedBox com largura explícita: sem isso o texto não quebra linha
+      // dentro do FittedBox (largura solta → 1 linha gigante → encolhe tudo).
+      return pw.SizedBox(
+        width: infoW,
+        child: pw.Text(
+          text,
+          textAlign: pw.TextAlign.center,
+          maxLines: 2,
+          style: pw.TextStyle(
+            font: rawlineBold,
+            fontSize: fontSize,
+            color: isPlaceholder ? PdfColors.grey400 : PdfColors.black,
+          ),
+        ),
+      );
+    }
+
     pdf.addPage(
       pw.Page(
         pageFormat: const PdfPageFormat(pdfWidth, pdfHeight),
@@ -98,79 +139,48 @@ class NativePdfGenerator {
                     color: PdfColors.white,
                     borderRadius: pw.BorderRadius.circular(8 * scaleX),
                   ),
-                  // Auto-ajuste (espelha o AutoSizeText da tela): se nome ou
-                  // secretaria forem longos, o bloco inteiro reduz em vez
-                  // de cortar texto para fora da caixa. Sem Spacer aqui:
-                  // FittedBox dá altura solta e flex explode (PdfException).
+                  // Auto-ajuste (espelha o AutoSizeText da tela): textos
+                  // longos encolhem o bloco em vez de cortar. Sem Spacer
+                  // (flex explode com altura solta — ver histórico).
                   child: pw.FittedBox(
                     fit: pw.BoxFit.scaleDown,
                     child: pw.Column(
-                    mainAxisSize: pw.MainAxisSize.min,
-                    mainAxisAlignment: pw.MainAxisAlignment.center,
-                    crossAxisAlignment: pw.CrossAxisAlignment.center,
-                    children: [
-                      // Nome e cargo.
-                      pw.Column(
-                        mainAxisSize: pw.MainAxisSize.min,
-                        children: [
-                          pw.Text(
-                            isNameEmpty
-                                ? 'NOME DO FUNCIONÁRIO'
-                                : badgeData.name,
-                            textAlign: pw.TextAlign.center,
-                            maxLines: 2,
-                            style: pw.TextStyle(
-                              font: rawlineBold,
-                              fontSize: 10,
-                              color: isNameEmpty
-                                  ? PdfColors.grey400
-                                  : PdfColors.black,
-                            ),
-                          ),
-                          pw.SizedBox(height: 2),
-                          pw.Text(
-                            isRoleEmpty ? 'CARGO / FUNÇÃO' : badgeData.role,
-                            textAlign: pw.TextAlign.center,
-                            maxLines: 2,
-                            style: pw.TextStyle(
-                              font: rawlineBold,
-                              fontSize: 7,
-                              color: isRoleEmpty
-                                  ? PdfColors.grey400
-                                  : PdfColors.black,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      pw.SizedBox(height: 3),
-
-                      // Divisor (métricas do widget: 2px × indent 15).
-                      pw.Divider(
-                        color: PdfColors.black,
-                        thickness: 2 * scaleY,
-                        indent: 15 * scaleX,
-                        endIndent: 15 * scaleX,
-                      ),
-
-                      pw.SizedBox(height: 3),
-
-                      // Secretaria.
-                      pw.Text(
-                        isDeptEmpty
-                            ? 'SECRETARIA / DEPARTAMENTO'
-                            : badgeData.department,
-                        textAlign: pw.TextAlign.center,
-                        maxLines: 2,
-                        style: pw.TextStyle(
-                          font: rawlineBold,
-                          fontSize: 7,
-                          color: isDeptEmpty
-                              ? PdfColors.grey400
-                              : PdfColors.black,
+                      mainAxisSize: pw.MainAxisSize.min,
+                      mainAxisAlignment: pw.MainAxisAlignment.center,
+                      crossAxisAlignment: pw.CrossAxisAlignment.center,
+                      children: [
+                        infoText(
+                          isNameEmpty
+                              ? 'NOME DO FUNCIONÁRIO'
+                              : badgeData.name,
+                          fontSize: 10,
+                          isPlaceholder: isNameEmpty,
                         ),
-                      ),
-                    ],
+                        pw.SizedBox(height: 3),
+                        infoText(
+                          isRoleEmpty ? 'CARGO / FUNÇÃO' : badgeData.role,
+                          fontSize: 7,
+                          isPlaceholder: isRoleEmpty,
+                        ),
+                        pw.SizedBox(height: 3),
+
+                        // Divisor (métricas do widget: 2px × indent 15).
+                        pw.Divider(
+                          color: PdfColors.black,
+                          thickness: 2 * scaleY,
+                          indent: 15 * scaleX,
+                          endIndent: 15 * scaleX,
+                        ),
+                        pw.SizedBox(height: 3),
+
+                        infoText(
+                          isDeptEmpty
+                              ? 'SECRETARIA / DEPARTAMENTO'
+                              : badgeData.department,
+                          fontSize: 7,
+                          isPlaceholder: isDeptEmpty,
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -181,13 +191,7 @@ class NativePdfGenerator {
       ),
     );
 
-    // 5. Salva e compartilha.
-    final Uint8List pdfBytes = await pdf.save();
-
-    await Printing.sharePdf(
-      bytes: pdfBytes,
-      filename: _sanitizeFilename(badgeData),
-    );
+    return pdf.save();
   }
 
   static String _sanitizeFilename(BadgeData badgeData) {
