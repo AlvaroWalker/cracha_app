@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../../services/badge_manager.dart';
 import '../../utils/app_tokens.dart';
-import '../../views/app_banner_dica.dart';
 import 'editor_photo_card.dart';
 import 'editor_secretaria_field.dart';
 import 'editor_servidor_field.dart';
@@ -81,15 +80,6 @@ class EditorPanel extends StatelessWidget {
         _GroupTitle(label: 'Secretaria', muted: muted),
         const SizedBox(height: AppSpace.md),
         EditorSecretariaField(currentDepartment: bd.department),
-
-        const SizedBox(height: AppSpace.xl),
-
-        const AppBannerDica(
-          icon: Icons.info_outline_rounded,
-          text:
-              'O crachá é atualizado automaticamente na pré-visualização conforme você digita.',
-        ),
-        const SizedBox(height: AppSpace.lg),
       ],
     );
   }

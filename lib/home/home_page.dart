@@ -8,7 +8,6 @@ import '../services/badge_manager.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_snackbar.dart';
 import '../utils/app_tokens.dart';
-import '../utils/pdf_generator.dart';
 import '../views/app_button.dart';
 import '../views/app_card.dart';
 import 'widgets/editor_panel.dart';
@@ -197,15 +196,14 @@ class _WorkspaceHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Faixa densa só de ações (sem título: "Emissor" já vem do AppShell).
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpace.lg,
-        AppSpace.md,
+        0,
         AppSpace.sm,
         AppSpace.sm,
       ),
-      // Só ações: o título "Emissor" já vem do AppShell (AppBar no mobile,
-      // _TopBar no desktop) — repetir aqui duplicava o cabeçalho.
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -213,12 +211,14 @@ class _WorkspaceHeader extends StatelessWidget {
           AppButton.secondary(
             label: 'Novo',
             icon: Icons.add_rounded,
+            size: AppButtonSize.sm,
             onPressed: onNew,
           ),
           const SizedBox(width: 8),
           AppButton.primary(
             label: 'Salvar',
             icon: Icons.save_outlined,
+            size: AppButtonSize.sm,
             onPressed: onSave,
           ),
         ],
@@ -266,7 +266,7 @@ class _DesktopBody extends StatelessWidget {
             padding: const EdgeInsets.all(AppSpace.lg),
             child: PreviewPanel(
               globalKey: globalKey,
-              inspector: _InspectorPanel(globalKey: globalKey),
+              inspector: const _InspectorPanel(),
             ),
           ),
         ),
@@ -313,8 +313,7 @@ class _MobileBody extends StatelessWidget {
 // ============================================================================
 
 class _InspectorPanel extends StatelessWidget {
-  final GlobalKey globalKey;
-  const _InspectorPanel({required this.globalKey});
+  const _InspectorPanel();
 
   @override
   Widget build(BuildContext context) {
@@ -322,7 +321,7 @@ class _InspectorPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _InspectorActionsCard(globalKey: globalKey),
+          const _InspectorActionsCard(),
           const SizedBox(height: AppSpace.md),
           const _InspectorStatusCard(),
         ],
@@ -334,19 +333,7 @@ class _InspectorPanel extends StatelessWidget {
 // ---------- card Ações ----------------------------------------------------
 
 class _InspectorActionsCard extends StatelessWidget {
-  final GlobalKey globalKey;
-  const _InspectorActionsCard({required this.globalKey});
-
-  Future<void> _onPdf(BuildContext context) async {
-    final bm = context.read<BadgeManager>();
-    final bd = bm.currentBadge;
-    if (bd == null) return;
-    await PdfGenerator.generateAndSharePdf(
-      globalKey,
-      context,
-      badgeData: bd,
-    );
-  }
+  const _InspectorActionsCard();
 
   void _onDuplicate(BuildContext context) {
     final bm = context.read<BadgeManager>();
@@ -407,13 +394,8 @@ class _InspectorActionsCard extends StatelessWidget {
         children: [
           const _CardTitle(label: 'Ações'),
           const SizedBox(height: AppSpace.sm),
-          AppButton.primary(
-            label: 'Gerar PDF',
-            icon: Icons.picture_as_pdf_rounded,
-            expanded: true,
-            onPressed: () => _onPdf(context),
-          ),
-          const SizedBox(height: AppSpace.sm),
+          // Sem "Gerar PDF" aqui DE PROPÓSITO: o botão principal fica sob o
+          // preview (e no mobile não há inspector — seria duplicado/faltante).
           AppButton.secondary(
             label: 'Duplicar',
             icon: Icons.content_copy_rounded,
