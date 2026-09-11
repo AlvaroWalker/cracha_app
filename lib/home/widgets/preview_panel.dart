@@ -358,7 +358,7 @@ class _PdfButton extends StatelessWidget {
         // TESTE (branch teste-pdf-vetorizado): PDF vetorial lado a lado.
         const SizedBox(height: 8),
         OutlinedButton.icon(
-          onPressed: () => NativePdfGenerator.generateAndSharePdf(badge),
+          onPressed: () => PdfGeneratorNative.generateAndSharePdf(badge),
           icon: const Icon(Icons.description_outlined, size: 18),
           label: const Text('PDF Vetor (TESTE)'),
         ),
