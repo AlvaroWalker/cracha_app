@@ -32,7 +32,6 @@ class _ServidorAutocompleteFieldState extends State<ServidorAutocompleteField> {
   final LayerLink _layerLink = LayerLink();
   List<Servidor> _sugestoes = [];
   bool _suprimirSugestoes = false;
-  bool _interagindoComOverlay = false;
   bool _carregando = false;
   Timer? _debounce;
   String _lastQuery = '';
@@ -66,8 +65,13 @@ class _ServidorAutocompleteFieldState extends State<ServidorAutocompleteField> {
 
   void _onFocus() {
     if (!(widget.focusNode?.hasFocus ?? false)) {
+      // Fecha após 180ms (tempo do tap concluir). Se o foco continua fora,
+      // o overlay é obsoleto e morre — sem isso ele grudava para sempre
+      // quando um pointer-down não virava seleção (scroll, clique fora).
       Future.delayed(const Duration(milliseconds: 180), () {
-        if (!_interagindoComOverlay && mounted) _removeOverlay();
+        if (!mounted) return;
+        if (widget.focusNode?.hasFocus ?? false) return;
+        _removeOverlay();
       });
     } else if (widget.controller.text.trim().length >= 3) {
       // Reabre sugestões quando ganha foco e tem texto
@@ -132,6 +136,8 @@ class _ServidorAutocompleteFieldState extends State<ServidorAutocompleteField> {
   }
 
   void _showOverlay() {
+    // Resultado tardio com campo desfocado = overlay fantasma. Mata aqui.
+    if (widget.focusNode != null && !(widget.focusNode!.hasFocus)) return;
     if (_overlayEntry != null) {
       _overlayEntry!.markNeedsBuild();
       return;
@@ -193,7 +199,6 @@ class _ServidorAutocompleteFieldState extends State<ServidorAutocompleteField> {
                       final s = _sugestoes[i];
                       final isAtivo = i == _itemAtivo;
                       return Listener(
-                        onPointerDown: (_) => _interagindoComOverlay = true,
                         onPointerHover: (_) {
                           if (_itemAtivo != i) {
                             setState(() => _itemAtivo = i);
@@ -370,7 +375,6 @@ class _ServidorAutocompleteFieldState extends State<ServidorAutocompleteField> {
   }
 
   void _selecionar(Servidor s) {
-    _interagindoComOverlay = false;
     _suprimirSugestoes = true;
     _removeOverlay();
     widget.controller.text = s.nome;
