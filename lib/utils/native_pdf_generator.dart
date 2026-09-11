@@ -100,17 +100,18 @@ class NativePdfGenerator {
                   ),
                   // Auto-ajuste (espelha o AutoSizeText da tela): se nome ou
                   // secretaria forem longos, o bloco inteiro reduz em vez
-                  // de cortar texto para fora da caixa.
+                  // de cortar texto para fora da caixa. Sem Spacer aqui:
+                  // FittedBox dá altura solta e flex explode (PdfException).
                   child: pw.FittedBox(
                     fit: pw.BoxFit.scaleDown,
                     child: pw.Column(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
+                    mainAxisSize: pw.MainAxisSize.min,
+                    mainAxisAlignment: pw.MainAxisAlignment.center,
                     crossAxisAlignment: pw.CrossAxisAlignment.center,
                     children: [
-                      pw.Spacer(),
-
                       // Nome e cargo.
                       pw.Column(
+                        mainAxisSize: pw.MainAxisSize.min,
                         children: [
                           pw.Text(
                             isNameEmpty
@@ -142,7 +143,7 @@ class NativePdfGenerator {
                         ],
                       ),
 
-                      pw.Spacer(),
+                      pw.SizedBox(height: 3),
 
                       // Divisor (métricas do widget: 2px × indent 15).
                       pw.Divider(
@@ -152,7 +153,7 @@ class NativePdfGenerator {
                         endIndent: 15 * scaleX,
                       ),
 
-                      pw.Spacer(),
+                      pw.SizedBox(height: 3),
 
                       // Secretaria.
                       pw.Text(
@@ -169,8 +170,6 @@ class NativePdfGenerator {
                               : PdfColors.black,
                         ),
                       ),
-
-                      pw.Spacer(),
                     ],
                     ),
                   ),
