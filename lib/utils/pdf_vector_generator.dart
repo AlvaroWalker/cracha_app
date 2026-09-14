@@ -18,6 +18,59 @@ import '../views/badge_pdf_widget.dart';
 //
 // Mantém o mesmo diálogo de progresso do gerador por captura.
 class PdfVectorGenerator {
+  /// Monta o PDF vetorial e devolve os bytes (sem diálogos).
+  ///
+  /// Usado pela tela de comparação lado a lado. Separado de
+  /// [generateAndSharePdf] de propósito para não mexer no fluxo que
+  /// já funciona.
+  static Future<Uint8List> buildBadgePdfBytes({
+    required BadgeData badgeData,
+  }) async {
+    // Rawline Bold — mesmo arquivo registrado no pubspec.
+    final fontData = await rootBundle.load('assets/rawline/rawline-700.ttf');
+    final rawlineBold = pw.Font.ttf(fontData);
+
+    final cardArtData = await rootBundle.load('assets/images/CRACHA.png');
+    final cardArt = pw.MemoryImage(cardArtData.buffer.asUint8List());
+
+    final placeholderData =
+        await rootBundle.load('assets/images/placeholder.png');
+    final placeholderPhoto =
+        pw.MemoryImage(placeholderData.buffer.asUint8List());
+
+    final pw.MemoryImage? photo =
+        badgeData.photo != null ? pw.MemoryImage(badgeData.photo!) : null;
+
+    final pdf = pw.Document();
+
+    const double mmToPt = 72 / 25.4;
+    final pageWidth = 54 * mmToPt;
+    final pageHeight = 85 * mmToPt;
+
+    // Escala anisotrópica: o cartão (333.4×523.19) preenche 54×85mm
+    // exatos sem cortar nem sobrar margem (distorção < 0.5%).
+    final scaleX = pageWidth / BadgeGeometry.cardWidth;
+    final scaleY = pageHeight / BadgeGeometry.cardHeight;
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat(pageWidth, pageHeight, marginAll: 0),
+        build: (pdfContext) => BadgePdfWidget.buildCard(
+          context: pdfContext,
+          badge: badgeData,
+          cardArt: cardArt,
+          placeholderPhoto: placeholderPhoto,
+          photo: photo,
+          rawlineBold: rawlineBold,
+          scaleX: scaleX,
+          scaleY: scaleY,
+        ),
+      ),
+    );
+
+    return pdf.save();
+  }
+
   static Future<void> generateAndSharePdf(
     BuildContext context, {
     required BadgeData badgeData,

@@ -1,7 +1,4 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
-import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/badge_controller.dart';
@@ -9,7 +6,6 @@ import '../../models/badge_data.dart';
 import '../../services/badge_manager.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_tokens.dart';
-import '../../utils/pdf_generator.dart';
 import '../../utils/pdf_vector_generator.dart';
 import '../../views/badge_design.dart';
 
@@ -312,47 +308,15 @@ class _PdfButton extends StatelessWidget {
 
   const _PdfButton({required this.globalKey, required this.badge});
 
-  /// Popup de preview: mostra o PDF antes de baixar/compartilhar.
-  void _showPreview(BuildContext context) {
-    final future =
-        PdfGenerator.buildBadgePdfBytes(globalKey, badgeData: badge);
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        insetPadding: const EdgeInsets.all(16),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560, maxHeight: 720),
-          child: FutureBuilder<Uint8List>(
-            future: future,
-            builder: (ctx, snap) {
-              if (snap.hasError) {
-                return const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Text(
-                    'Não foi possível gerar a pré-visualização. Tente novamente.',
-                    textAlign: TextAlign.center,
-                  ),
-                );
-              }
-              if (!snap.hasData) {
-                return const SizedBox(
-                  height: 320,
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-              final bytes = snap.data!;
-              return PdfPreview(
-                build: (_) async => bytes,
-                allowSharing: true,
-                allowPrinting: true,
-                canChangePageFormat: false,
-                canDebug: false,
-                pdfFileName: 'cracha.pdf',
-              );
-            },
-          ),
-        ),
-      ),
+  /// Gera e baixa/compartilha o PDF direto (sem preview).
+  ///
+  /// Exportação atual: VETORIAL. A antiga (raster, screenshot do widget)
+  /// está preservada em [PdfGenerator] — para voltar a ela, basta chamar
+  /// [PdfGenerator.generateAndSharePdf] aqui de volta.
+  Future<void> _downloadPdf(BuildContext context) {
+    return PdfVectorGenerator.generateAndSharePdf(
+      context,
+      badgeData: badge,
     );
   }
 
@@ -374,7 +338,7 @@ class _PdfButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.md),
             child: InkWell(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              onTap: () => _showPreview(context),
+              onTap: () => _downloadPdf(context),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 child: Row(
@@ -397,16 +361,6 @@ class _PdfButton extends StatelessWidget {
               ),
             ),
           ),
-        ),
-        // TESTE (branch teste-pdf-vetorizado): PDF vetorial lado a lado.
-        const SizedBox(height: 8),
-        OutlinedButton.icon(
-          onPressed: () => PdfVectorGenerator.generateAndSharePdf(
-            context,
-            badgeData: badge,
-          ),
-          icon: const Icon(Icons.description_outlined, size: 18),
-          label: const Text('PDF Vetor (TESTE)'),
         ),
       ],
     );

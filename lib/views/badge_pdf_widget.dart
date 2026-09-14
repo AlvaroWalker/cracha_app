@@ -90,9 +90,9 @@ class BadgePdfWidget {
             ),
           ),
 
-          // Foto
+          // Foto (+4px só no vetor — ajuste fino; a tela segue BadgeGeometry puro).
           pw.Positioned(
-            top: pxH(BadgeGeometry.photoTop),
+            top: pxH(BadgeGeometry.photoTop + 2),
             left: (cardWidth - photoWidth) / 2,
             child: pw.Container(
               width: photoWidth,
@@ -154,10 +154,15 @@ class BadgePdfWidget {
                     maxLines: 2,
                     color: isRoleEmpty ? PdfColors.grey400 : PdfColors.black,
                   ),
-                  pw.Container(
-                    margin: pw.EdgeInsets.symmetric(horizontal: pxW(15)),
-                    height: pxH(2),
-                    color: PdfColors.black,
+                  // Respiro extra entre cargo e divisória (só vetor; a tela
+                  // distribui via spaceAround e não tem esse respiro).
+                  pw.Padding(
+                    padding: pw.EdgeInsets.only(top: pxH(5)),
+                    child: pw.Container(
+                      margin: pw.EdgeInsets.symmetric(horizontal: pxW(15)),
+                      height: pxH(2),
+                      color: PdfColors.black,
+                    ),
                   ),
                   _autoSizeText(
                     text: isDeptEmpty
@@ -185,6 +190,9 @@ class BadgePdfWidget {
 
   /// Autosize manual: reduz a fonte em passos de 0.5pt até o texto caber
   /// em [maxLines] linhas dentro de [maxWidth], sem passar de [minFontSize].
+  ///
+  /// [lineHeightScale] encolhe a entrelinha (1.0 = natural do pacote pdf,
+  /// que avança a caixa em cheia ascent+descent + lineSpacing 0).
   static pw.Widget _autoSizeText({
     required String text,
     required pw.Font styleFont,
@@ -195,6 +203,7 @@ class BadgePdfWidget {
     required int maxLines,
     required PdfColor color,
     double letterSpacing = 0,
+    double lineHeightScale = 0.8,
   }) {
     const step = 0.5;
     double fontSize = maxFontSize;
@@ -242,6 +251,13 @@ class BadgePdfWidget {
     }
     if (fontSize < minFontSize) fontSize = minFontSize;
 
+    // Entrelinha −10%: avanço natural = caixa em cheia (ascent+descent,
+    // tightBounds=false) + lineSpacing 0. O lineSpacing negativo tira a
+    // fração (1-scale) exata dessa caixa, proporcional à fonte final.
+    var emBox = metricsFont.ascent + metricsFont.descent.abs();
+    if (emBox <= 0 || emBox > 2) emBox = 1.0;
+    final gapTweak = (lineHeightScale - 1) * emBox * fontSize;
+
     return pw.Text(
       lines.join('\n'),
       maxLines: maxLines,
@@ -252,6 +268,7 @@ class BadgePdfWidget {
         fontSize: fontSize,
         color: color,
         letterSpacing: letterSpacing,
+        lineSpacing: gapTweak,
       ),
     );
   }
