@@ -196,17 +196,64 @@ class _WorkspaceHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Faixa densa só de ações (sem título: "Emissor" já vem do AppShell).
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpace.lg,
-        0,
-        AppSpace.sm,
-        AppSpace.sm,
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bm = context.watch<BadgeManager>();
+    final bd = bm.currentBadge;
+    final hasName = bd != null && bd.name.trim().isNotEmpty;
+    final nameLabel = hasName ? bd.name.trim() : 'Novo Crachá';
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(AppSpace.lg, 12, AppSpace.lg, 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0C1014) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            width: 1,
+          ),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Chip de Contexto Atual
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF141A21) : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(
+                color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.edit_note_rounded,
+                  size: 16,
+                  color: isDark ? AppColors.brandDark : AppColors.brandLight,
+                ),
+                const SizedBox(width: 6),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 240),
+                  child: Text(
+                    nameLabel,
+                    style: TextStyle(
+                      fontFamily: 'Rawline',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? AppColors.textDark : AppColors.textLight,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
           const Spacer(),
           AppButton.secondary(
             label: 'Novo',
@@ -216,8 +263,8 @@ class _WorkspaceHeader extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           AppButton.primary(
-            label: 'Salvar',
-            icon: Icons.save_outlined,
+            label: 'Salvar Crachá',
+            icon: Icons.save_rounded,
             size: AppButtonSize.sm,
             onPressed: onSave,
           ),

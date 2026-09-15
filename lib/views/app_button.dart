@@ -3,8 +3,13 @@ import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_tokens.dart';
 
-/// Botão padronizado de alto padrão visual: primário, secundário, acento dourado, texto, ícone.
-/// Adapta automaticamente ao tema (claro/escuro).
+/// Botão padronizado de alto padrão visual (Linear / Vercel):
+/// - primary: Verde esmeralda institucional com alto contraste
+/// - secondary: Superfície neutra com borda hairline
+/// - accent: Dourado institucional
+/// - danger: Ação destrutiva com acabamento polido
+/// - text: Botão minimalista
+/// - icon: Botão utilitário compacto
 class AppButton extends StatelessWidget {
   final String? label;
   final IconData? icon;
@@ -95,7 +100,8 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final buttonStyle = _buildStyle(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final padding = _getPadding();
     final iconSize = _getIconSize();
     final effectiveCallback = loading ? null : onPressed;
@@ -103,22 +109,43 @@ class AppButton extends StatelessWidget {
     Widget button;
 
     if (variant == AppButtonVariant.icon) {
-      button = IconButton(
-        icon: loading
-            ? SizedBox(
-                width: iconSize,
-                height: iconSize,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: _getForegroundColor(context),
-                ),
-              )
-            : Icon(icon, size: iconSize),
-        onPressed: effectiveCallback,
-        style: buttonStyle,
-        tooltip: tooltip,
+      final fgColor = isDark ? AppColors.textDark : AppColors.textLight;
+      final border = BorderSide(
+        color: isDark ? AppColors.borderDark : AppColors.borderLight,
+        width: 1,
       );
+      final bg = isDark ? const Color(0xFF14191F) : Colors.white;
+
+      button = Material(
+        color: bg,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          side: border,
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          onTap: effectiveCallback,
+          child: Padding(
+            padding: EdgeInsets.all(_getIconOnlyPadding()),
+            child: loading
+                ? SizedBox(
+                    width: iconSize,
+                    height: iconSize,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: fgColor,
+                    ),
+                  )
+                : Icon(icon, size: iconSize, color: fgColor),
+          ),
+        ),
+      );
+
+      if (tooltip != null) {
+        button = Tooltip(message: tooltip!, child: button);
+      }
     } else {
+      final buttonStyle = _buildStyle(context);
       final content = Row(
         mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -132,10 +159,10 @@ class AppButton extends StatelessWidget {
                 color: _getForegroundColor(context),
               ),
             ),
-            if (label != null) const SizedBox(width: AppSpacing.sm),
+            if (label != null) const SizedBox(width: AppSpace.sm),
           ] else if (icon != null) ...[
             Icon(icon, size: iconSize),
-            if (label != null) const SizedBox(width: AppSpacing.sm),
+            if (label != null) const SizedBox(width: AppSpace.sm),
           ],
           if (label != null)
             Text(
@@ -143,7 +170,7 @@ class AppButton extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Rawline',
                 fontSize: _getFontSize(),
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
                 letterSpacing: 0.1,
               ),
             ),
@@ -179,16 +206,22 @@ class AppButton extends StatelessWidget {
     return ButtonStyle(
       foregroundColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.disabled)) {
-          return isDark ? AppColors.darkHint : AppColors.mutedColor;
+          return isDark ? AppColors.mutedDark.withValues(alpha: 0.5) : AppColors.mutedLight.withValues(alpha: 0.5);
         }
         return foregroundColor;
       }),
       backgroundColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.disabled)) {
-          return isDark ? AppColors.darkSurfaceVariant : Colors.grey.shade200;
+          return isDark ? const Color(0xFF161B21) : const Color(0xFFF1F5F9);
         }
         if (states.contains(WidgetState.hovered) && backgroundColor != null) {
-          return backgroundColor.withValues(alpha: isDark ? 0.88 : 0.92);
+          if (variant == AppButtonVariant.secondary) {
+            return isDark ? const Color(0xFF1E252D) : const Color(0xFFF1F5F9);
+          }
+          if (variant == AppButtonVariant.text) {
+            return isDark ? const Color(0x18FFFFFF) : const Color(0x0A000000);
+          }
+          return backgroundColor.withValues(alpha: 0.92);
         }
         return backgroundColor;
       }),
@@ -197,34 +230,35 @@ class AppButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
       ),
-      elevation: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.hovered) &&
-            (variant == AppButtonVariant.primary || variant == AppButtonVariant.accent)) {
-          return 3.0;
+      elevation: const WidgetStatePropertyAll(0),
+      side: WidgetStateProperty.resolveWith((states) {
+        if (sideColor == null) return null;
+        if (states.contains(WidgetState.hovered) && variant == AppButtonVariant.secondary) {
+          return BorderSide(
+            color: isDark ? AppColors.borderHighlightDark : AppColors.borderHighlightLight,
+            width: 1,
+          );
         }
-        return 0.0;
+        return BorderSide(color: sideColor, width: 1);
       }),
-      side: WidgetStatePropertyAll(
-        sideColor != null ? BorderSide(color: sideColor, width: 1.2) : null,
-      ),
     );
   }
 
   Color _getForegroundColor(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primary = isDark ? AppColors.darkPrimary : AppColors.primaryColor;
     switch (variant) {
       case AppButtonVariant.primary:
+        return isDark ? const Color(0xFF042F2E) : Colors.white;
       case AppButtonVariant.danger:
         return Colors.white;
       case AppButtonVariant.accent:
         return isDark ? Colors.black : const Color(0xFF5E4500);
       case AppButtonVariant.secondary:
-        return primary;
+        return isDark ? AppColors.textDark : AppColors.textLight;
       case AppButtonVariant.text:
-        return isDark ? AppColors.darkText : AppColors.textColor;
+        return isDark ? AppColors.brandDark : AppColors.brandLight;
       case AppButtonVariant.icon:
-        return isDark ? AppColors.darkText : AppColors.textColor;
+        return isDark ? AppColors.textDark : AppColors.textLight;
     }
   }
 
@@ -237,13 +271,13 @@ class AppButton extends StatelessWidget {
       case AppButtonVariant.accent:
         return isDark ? AppColors.darkAccent : AppColors.accentColor;
       case AppButtonVariant.danger:
-        return AppColors.errorColor;
+        return AppColors.danger;
       case AppButtonVariant.secondary:
-        return isDark ? AppColors.darkSurfaceVariant : Colors.white;
+        return isDark ? const Color(0xFF14191F) : Colors.white;
       case AppButtonVariant.text:
         return Colors.transparent;
       case AppButtonVariant.icon:
-        return isDark ? AppColors.darkSurfaceVariant : AppColors.surfaceSubtle;
+        return isDark ? const Color(0xFF14191F) : Colors.white;
     }
   }
 
@@ -251,9 +285,11 @@ class AppButton extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (variant) {
       case AppButtonVariant.secondary:
-        return isDark ? AppColors.darkBorderHighlight : AppColors.borderColor;
+        return isDark ? AppColors.borderDark : AppColors.borderLight;
       case AppButtonVariant.accent:
         return isDark ? AppColors.darkAccent : AppColors.accentColor;
+      case AppButtonVariant.danger:
+        return isDark ? AppColors.danger.withValues(alpha: 0.8) : null;
       default:
         return null;
     }
@@ -262,11 +298,22 @@ class AppButton extends StatelessWidget {
   EdgeInsets _getPadding() {
     switch (size) {
       case AppButtonSize.sm:
-        return const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 8);
+        return const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
       case AppButtonSize.md:
-        return const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 12);
+        return const EdgeInsets.symmetric(horizontal: 16, vertical: 11);
       case AppButtonSize.lg:
-        return const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: 16);
+        return const EdgeInsets.symmetric(horizontal: 20, vertical: 14);
+    }
+  }
+
+  double _getIconOnlyPadding() {
+    switch (size) {
+      case AppButtonSize.sm:
+        return 7;
+      case AppButtonSize.md:
+        return 9;
+      case AppButtonSize.lg:
+        return 12;
     }
   }
 
@@ -275,20 +322,20 @@ class AppButton extends StatelessWidget {
       case AppButtonSize.sm:
         return 12.5;
       case AppButtonSize.md:
-        return 14;
+        return 13.5;
       case AppButtonSize.lg:
-        return 15.5;
+        return 15;
     }
   }
 
   double _getIconSize() {
     switch (size) {
       case AppButtonSize.sm:
-        return 16;
+        return 15;
       case AppButtonSize.md:
-        return 18;
+        return 17;
       case AppButtonSize.lg:
-        return 22;
+        return 20;
     }
   }
 }
@@ -296,4 +343,3 @@ class AppButton extends StatelessWidget {
 enum AppButtonVariant { primary, secondary, accent, text, danger, icon }
 
 enum AppButtonSize { sm, md, lg }
-

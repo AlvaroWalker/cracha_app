@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../services/servidor_repository.dart';
 import '../utils/app_colors.dart';
+import '../utils/app_tokens.dart';
 
 /// Campo de nome com autocomplete da base de servidores.
 /// Ao selecionar, chama [onServidorSelecionado] para preencher cargo e secretaria.
@@ -149,25 +150,32 @@ class _ServidorAutocompleteFieldState extends State<ServidorAutocompleteField> {
         final textColor = Theme.of(context).textTheme.bodyLarge?.color ??
             (isDark ? AppColors.darkText : AppColors.textColor);
         final subtitleColor = isDark ? AppColors.darkTextSecondary : AppColors.subtitleColor;
-        final cardColor = Theme.of(context).cardTheme.color ??
-            (isDark ? AppColors.darkCard : Colors.white);
-        final selectedBg = primary.withValues(alpha: isDark ? 0.18 : 0.08);
+        final borderColor = isDark ? AppColors.borderDark : AppColors.borderLight;
+        final cardColor = isDark ? const Color(0xFF101418) : Colors.white;
+        final selectedBg = primary.withValues(alpha: isDark ? 0.16 : 0.08);
         return Positioned(
           width: MediaQuery.of(context).size.width.clamp(300.0, 460.0),
           child: CompositedTransformFollower(
             link: _layerLink,
             showWhenUnlinked: false,
             offset: const Offset(0, 8),
-            child: Material(
-              elevation: 8,
-              borderRadius: BorderRadius.circular(12),
-              color: cardColor,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Contador de resultados
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+            child: Container(
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(color: borderColor, width: 1),
+                boxShadow: AppShadow.lg(context),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                child: Material(
+                  color: Colors.transparent,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Contador de resultados
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
                   child: Row(
                     children: [
                       Text(
@@ -258,7 +266,9 @@ class _ServidorAutocompleteFieldState extends State<ServidorAutocompleteField> {
             ),
           ),
         ),
-        );
+      ),
+    ),
+  );
       },
     );
     Overlay.of(context).insert(_overlayEntry!);

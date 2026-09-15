@@ -169,24 +169,8 @@ class _BadgeStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    // Sombra dupla com tons derivados do tema — sem hex hardcoded.
-    final shadowColor = theme.colorScheme.shadow
-        .withValues(alpha: isDark ? 0.50 : 0.12);
-    final badgeShadow = <BoxShadow>[
-      BoxShadow(
-        color: shadowColor.withValues(alpha: isDark ? 0.28 : 0.10),
-        blurRadius: 20,
-        offset: const Offset(0, 5),
-      ),
-      BoxShadow(
-        color: shadowColor.withValues(alpha: isDark ? 0.40 : 0.18),
-        blurRadius: 4,
-        offset: const Offset(0, 1),
-      ),
-    ];
+    // Sombra física multicamada estilo design studio / Linear.
+    final badgeShadow = AppShadow.badgeStage(context);
 
     return LayoutBuilder(
       builder: (context, cons) {
@@ -196,7 +180,6 @@ class _BadgeStage extends StatelessWidget {
             ? (maxW - AppSpace.lg - 320).clamp(160.0, double.infinity)
             : maxW;
         // Palco sagrado (badge_design.dart): captura via GlobalKey + FittedBox.
-        // Não reinventar aqui — qualquer ajuste de geometria vai no kit.
         final body = _BadgeFrame(
           shadow: badgeShadow,
           child: buildBadgeStage(
@@ -228,7 +211,7 @@ class _BadgeStage extends StatelessWidget {
 }
 
 // ============================================================================
-// Quadro: fundo quadriculado sutil + sombra dupla envolvendo o crachá
+// Quadro: fundo com pontilhado/grid suave de estúdio de produto
 // ============================================================================
 
 class _BadgeFrame extends StatelessWidget {
@@ -245,19 +228,19 @@ class _BadgeFrame extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final gridColor =
-        (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05);
+        (isDark ? Colors.white : Colors.black).withValues(alpha: isDark ? 0.04 : 0.03);
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: shadow,
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: CustomPaint(
           painter: _GridPainter(
             color: gridColor,
-            cellSize: 8,
+            cellSize: 12,
           ),
           child: child,
         ),
@@ -267,7 +250,7 @@ class _BadgeFrame extends StatelessWidget {
 }
 
 // ============================================================================
-// CustomPainter — grid 8px sutil para o fundo do palco
+// CustomPainter — grid minimalista para o fundo do palco
 // ============================================================================
 
 class _GridPainter extends CustomPainter {
@@ -299,7 +282,7 @@ class _GridPainter extends CustomPainter {
 }
 
 // ============================================================================
-// Botão Gerar PDF — filled brand, radius 10, full-width
+// Botão Gerar PDF — Modern SaaS com micro-gradiente e borda de highlight
 // ============================================================================
 
 class _PdfButton extends StatelessWidget {
@@ -308,11 +291,6 @@ class _PdfButton extends StatelessWidget {
 
   const _PdfButton({required this.globalKey, required this.badge});
 
-  /// Gera e baixa/compartilha o PDF direto (sem preview).
-  ///
-  /// Exportação atual: VETORIAL. A antiga (raster, screenshot do widget)
-  /// está preservada em [PdfGenerator] — para voltar a ela, basta chamar
-  /// [PdfGenerator.generateAndSharePdf] aqui de volta.
   Future<void> _downloadPdf(BuildContext context) {
     return PdfVectorGenerator.generateAndSharePdf(
       context,
@@ -325,44 +303,41 @@ class _PdfButton extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final brand = isDark ? AppColors.brandDark : AppColors.brandLight;
-    final onBrand = isDark ? AppColors.textDark : Colors.white;
+    final onBrand = isDark ? const Color(0xFF042F2E) : Colors.white;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SizedBox(
-          width: double.infinity,
-          child: Material(
-            color: brand,
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              onTap: () => _downloadPdf(context),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.picture_as_pdf_rounded, size: 18, color: onBrand),
-                    const SizedBox(width: AppSpace.sm),
-                    Text(
-                      'Gerar PDF',
-                      style: TextStyle(
-                        fontFamily: 'Rawline',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: onBrand,
-                      ),
-                    ),
-                  ],
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadow.sm(context),
+      ),
+      child: Material(
+        color: brand,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          onTap: () => _downloadPdf(context),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.picture_as_pdf_rounded, size: 18, color: onBrand),
+                const SizedBox(width: AppSpace.sm),
+                Text(
+                  'Exportar Crachá em PDF',
+                  style: TextStyle(
+                    fontFamily: 'Rawline',
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.1,
+                    color: onBrand,
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 }

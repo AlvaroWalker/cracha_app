@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_tokens.dart';
 
-/// TextField padronizado de alta fidelidade visual.
-/// Adapta-se automaticamente ao tema claro/escuro.
+/// TextField padronizado no padrão Linear / Vercel:
+/// - Fundo limpo com borda hairline
+/// - Anel de foco esmeralda nítido
+/// - Tipografia e ícones balanceados
 class AppTextField extends StatelessWidget {
   final TextEditingController? controller;
   final String? hintText;
@@ -50,10 +52,10 @@ class AppTextField extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
-    final textColor = theme.textTheme.bodyLarge?.color ?? (isDark ? AppColors.darkText : AppColors.textColor);
-    final borderColor = isDark ? AppColors.darkBorder : AppColors.borderColor;
-    final disabledColor = isDark ? AppColors.darkSurfaceVariant : const Color(0xFFE2E8F0);
-    final fillColor = isDark ? AppColors.darkSurfaceVariant : Colors.white;
+    final textColor = isDark ? AppColors.textDark : AppColors.textLight;
+    final mutedColor = isDark ? AppColors.mutedDark : AppColors.mutedLight;
+    final borderColor = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final fillColor = isDark ? const Color(0xFF0E1317) : Colors.white;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,10 +65,10 @@ class AppTextField extends StatelessWidget {
             labelText!,
             style: TextStyle(
               fontFamily: 'Rawline',
-              fontSize: 13.5,
-              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
               color: textColor,
-              letterSpacing: 0.2,
+              letterSpacing: 0.1,
             ),
           ),
           const SizedBox(height: 6),
@@ -85,7 +87,7 @@ class AppTextField extends StatelessWidget {
           autofocus: autofocus,
           style: TextStyle(
             fontFamily: 'Rawline',
-            fontSize: 14.5,
+            fontSize: 14,
             color: textColor,
             fontWeight: FontWeight.w500,
           ),
@@ -94,52 +96,55 @@ class AppTextField extends StatelessWidget {
             hintStyle: TextStyle(
               fontFamily: 'Rawline',
               fontSize: 13.5,
-              color: isDark ? AppColors.darkHint : AppColors.mutedColor,
+              color: mutedColor,
+              fontWeight: FontWeight.w400,
             ),
             helperText: helperText,
             helperStyle: TextStyle(
               fontFamily: 'Rawline',
               fontSize: 11.5,
-              color: isDark ? AppColors.darkTextSecondary : AppColors.subtitleColor,
+              color: mutedColor,
             ),
-            prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: primary, size: 20) : null,
+            prefixIcon: prefixIcon != null
+                ? Icon(prefixIcon, color: mutedColor, size: 18)
+                : null,
             suffixIcon: suffixIcon != null
                 ? IconButton(
-                    icon: Icon(suffixIcon, size: 20),
+                    icon: Icon(suffixIcon, size: 18),
                     onPressed: onSuffixTap,
                     splashRadius: 18,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.subtitleColor,
+                    color: mutedColor,
                   )
                 : null,
             filled: true,
             fillColor: fillColor,
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
+              horizontal: 14,
+              vertical: 13,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: BorderSide(color: borderColor, width: 1.2),
+              borderSide: BorderSide(color: borderColor, width: 1),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: BorderSide(color: borderColor, width: 1.2),
+              borderSide: BorderSide(color: borderColor, width: 1),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: BorderSide(color: primary, width: 2),
+              borderSide: BorderSide(color: primary, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: const BorderSide(color: AppColors.errorColor, width: 1.5),
+              borderSide: const BorderSide(color: AppColors.danger, width: 1),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: const BorderSide(color: AppColors.errorColor, width: 2),
+              borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
             ),
             disabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: BorderSide(color: disabledColor, width: 1.2),
+              borderSide: BorderSide(color: borderColor.withValues(alpha: 0.5), width: 1),
             ),
           ),
         ),

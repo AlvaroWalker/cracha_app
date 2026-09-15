@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Tokens de espaçamento padronizado do app.
+/// Tokens de espaçamento padronizado do app (grid de 4px/8px).
 class AppSpace {
   AppSpace._();
 
@@ -14,100 +14,172 @@ class AppSpace {
   static const double huge = 64; // 64
 }
 
-/// Tokens de raio de borda padronizado.
+/// Tokens de raio de borda padronizado (Modern SaaS).
 class AppRadius {
   AppRadius._();
 
+  static const double xs = 4;
   static const double sm = 6;
   static const double md = 10;
-  static const double lg = 14;
-  static const double xl = 20;
+  static const double lg = 12;
+  static const double xl = 16;
+  static const double xxl = 24;
   static const double pill = 999;
 
   /// Alias de compat: código antigo usava `AppRadius.full`.
   static const double full = pill;
 }
 
-/// Tokens de sombra com tinta verde sutil (BRAND) e neutra (NEUTRO).
-/// Todos carregam um toque verde para reforçar a identidade visual.
+/// Tokens de sombra elegantes com micro-dispersão e camadas duplas (Linear/Vercel).
 class AppShadow {
   AppShadow._();
 
-  /// Sombra pequena — uso geral, chips, tags, ícones em superfícies.
+  /// Sombra sutil para botões, badges, chips e pequenos elementos.
   static List<BoxShadow> sm(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return _brandShadow(
-      y: 1,
-      blur: 3,
-      alpha: isDark ? 0.30 : 0.06,
-      neutralAlpha: isDark ? 0.40 : 0.04,
-    );
-  }
-
-  /// Sombra média — cards, painéis, header.
-  static List<BoxShadow> md(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return _brandShadow(
-      y: 4,
-      blur: 12,
-      alpha: isDark ? 0.28 : 0.08,
-      neutralAlpha: isDark ? 0.35 : 0.05,
-    );
-  }
-
-  /// Sombra grande — modais, dock elevada, dropdowns.
-  static List<BoxShadow> lg(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return _brandShadow(
-      y: 12,
-      blur: 32,
-      alpha: isDark ? 0.32 : 0.10,
-      neutralAlpha: isDark ? 0.45 : 0.06,
-    );
-  }
-
-  static List<BoxShadow> _brandShadow({
-    required double y,
-    required double blur,
-    required double alpha,
-    required double neutralAlpha,
-  }) {
-    // BRAND tinta verde sutil (#047857) + tinta neutra complementar.
-    return <BoxShadow>[
+    if (isDark) {
+      return const [
+        BoxShadow(
+          color: Color(0x60000000),
+          blurRadius: 3,
+          offset: Offset(0, 1),
+        ),
+      ];
+    }
+    return const [
       BoxShadow(
-        color: const Color(0xFF047857).withValues(alpha: alpha),
-        blurRadius: blur,
-        offset: Offset(0, y),
+        color: Color(0x0A000000),
+        blurRadius: 3,
+        offset: Offset(0, 1),
       ),
       BoxShadow(
-        color: const Color(0xFF0F172A).withValues(alpha: neutralAlpha),
-        blurRadius: blur * 0.4,
+        color: Color(0x05000000),
+        blurRadius: 1,
         offset: Offset(0, 1),
+      ),
+    ];
+  }
+
+  /// Sombra média — cards, painéis elevados, menus suspensos.
+  static List<BoxShadow> md(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (isDark) {
+      return [
+        const BoxShadow(
+          color: Color(0x70000000),
+          blurRadius: 12,
+          offset: Offset(0, 4),
+        ),
+        BoxShadow(
+          color: const Color(0xFF059669).withValues(alpha: 0.04),
+          blurRadius: 20,
+          offset: const Offset(0, 2),
+        ),
+      ];
+    }
+    return const [
+      BoxShadow(
+        color: Color(0x0D000000),
+        blurRadius: 10,
+        offset: Offset(0, 4),
+      ),
+      BoxShadow(
+        color: Color(0x05000000),
+        blurRadius: 2,
+        offset: Offset(0, 1),
+      ),
+    ];
+  }
+
+  /// Sombra grande — modais, popovers suspensos, palco do crachá.
+  static List<BoxShadow> lg(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (isDark) {
+      return [
+        const BoxShadow(
+          color: Color(0x90000000),
+          blurRadius: 32,
+          offset: Offset(0, 12),
+        ),
+        BoxShadow(
+          color: const Color(0xFF10B981).withValues(alpha: 0.08),
+          blurRadius: 36,
+          offset: const Offset(0, 4),
+        ),
+      ];
+    }
+    return const [
+      BoxShadow(
+        color: Color(0x18000000),
+        blurRadius: 24,
+        offset: Offset(0, 12),
+      ),
+      BoxShadow(
+        color: Color(0x08000000),
+        blurRadius: 6,
+        offset: Offset(0, 2),
+      ),
+    ];
+  }
+
+  /// Sombra física realista para o crachá no palco de preview.
+  static List<BoxShadow> badgeStage(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (isDark) {
+      return [
+        const BoxShadow(
+          color: Color(0xA0000000),
+          blurRadius: 30,
+          offset: Offset(0, 12),
+        ),
+        const BoxShadow(
+          color: Color(0x50000000),
+          blurRadius: 8,
+          offset: Offset(0, 2),
+        ),
+        BoxShadow(
+          color: const Color(0xFF10B981).withValues(alpha: 0.1),
+          blurRadius: 40,
+          offset: const Offset(0, 4),
+        ),
+      ];
+    }
+    return const [
+      BoxShadow(
+        color: Color(0x1F000000),
+        blurRadius: 24,
+        offset: Offset(0, 10),
+      ),
+      BoxShadow(
+        color: Color(0x0F000000),
+        blurRadius: 6,
+        offset: Offset(0, 2),
       ),
     ];
   }
 }
 
-/// Durações de animação padronizadas.
+/// Durações de animação padronizadas e curvas naturais.
 class AppDurations {
   AppDurations._();
 
-  static const Duration fast = Duration(milliseconds: 120);
-  static const Duration base = Duration(milliseconds: 200);
-  static const Duration slow = Duration(milliseconds: 320);
+  static const Duration fast = Duration(milliseconds: 140);
+  static const Duration base = Duration(milliseconds: 220);
+  static const Duration slow = Duration(milliseconds: 360);
+
+  static const Curve defaultCurve = Curves.easeOutCubic;
 }
 
 /// Breakpoints responsivos do app.
 class AppBreakpoint {
   AppBreakpoint._();
 
-  /// Largura mínima para o layout desktop (dock lateral 56px + conteúdo).
+  /// Largura mínima para o layout desktop com Sidebar lateral completa.
   static const double desktop = 1024;
+  static const double tablet = 768;
 }
 
-/// Aliases de compatibilidade (legado). Outros módulos ainda referenciam
-/// os nomes antigos; enquanto a migração global não acontece, expomos os
-/// mesmos símbolos para manter a base compilando.
+/// Aliases de compatibilidade (legado).
 class AppSpacing {
   AppSpacing._();
   static const double xs = AppSpace.xs;

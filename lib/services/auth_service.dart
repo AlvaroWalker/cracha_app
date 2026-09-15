@@ -145,23 +145,36 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
-  /// Painel institucional (gradiente verde + brasão + crachá vetorial).
+  /// Painel institucional (gradiente verde moderno + brasão + crachá vetorial).
   Widget _buildBrandPanel(BuildContext context, bool isDesktop) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Semantics(
       label: 'Prefeitura de Campo Verde, Emissor de Crachás',
       child: Container(
-        padding: const EdgeInsets.all(AppSpacing.xxl),
+        padding: const EdgeInsets.all(AppSpace.xxl),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.primaryColor, AppColors.darkGreen],
-          ),
+          gradient: isDark
+              ? const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF064E3B), Color(0xFF022C22)],
+                )
+              : const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF047857), Color(0xFF064E3B)],
+                ),
           borderRadius: isDesktop
               ? const BorderRadius.horizontal(
                   left: Radius.circular(AppRadius.xl))
               : const BorderRadius.vertical(
                   top: Radius.circular(AppRadius.xl)),
+          border: Border.all(
+            color: isDark ? const Color(0xFF0D5C46) : Colors.transparent,
+            width: 1,
+          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -171,16 +184,27 @@ class _LoginViewState extends State<LoginView> {
               children: [
                 Semantics(
                   label: 'Brasão do município',
-                  child: Image.asset(
-                    'assets/brasao.png',
-                    height: isDesktop ? 72 : 56,
-                    errorBuilder: (_, __, ___) {
-                      return const Icon(Icons.account_balance_rounded,
-                          color: Colors.white, size: 52);
-                    },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Image.asset(
+                      'assets/brasao.png',
+                      height: isDesktop ? 56 : 44,
+                      errorBuilder: (_, __, ___) {
+                        return const Icon(Icons.account_balance_rounded,
+                            color: Colors.white, size: 44);
+                      },
+                    ),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.md),
+                const SizedBox(width: AppSpace.md),
                 const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,17 +213,17 @@ class _LoginViewState extends State<LoginView> {
                         'CAMPO VERDE',
                         style: TextStyle(
                           fontFamily: 'Rawline',
-                          fontSize: 22,
+                          fontSize: 20,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
-                          letterSpacing: 1.2,
+                          letterSpacing: 1.0,
                         ),
                       ),
                       Text(
-                        'Emissor de Crachás',
+                        'Emissor Oficial de Crachás',
                         style: TextStyle(
                           fontFamily: 'Rawline',
-                          fontSize: 14,
+                          fontSize: 13,
                           color: Color(0xD9FFFFFF),
                         ),
                       ),
@@ -208,7 +232,7 @@ class _LoginViewState extends State<LoginView> {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: AppSpace.xl),
             // Representação ABSTRATA de crachá — 100% vetorial, sem PNG.
             Center(
               child: Semantics(
@@ -217,17 +241,17 @@ class _LoginViewState extends State<LoginView> {
               ),
             ),
             if (isDesktop) ...[
-              const SizedBox(height: AppSpacing.xxl),
+              const SizedBox(height: AppSpace.xxl),
               _buildBrandItem(context, Icons.badge_rounded,
-                  'Busca de servidores integrada ao RH'),
-              const SizedBox(height: AppSpacing.md),
+                  'Busca de servidores integrada à base oficial'),
+              const SizedBox(height: AppSpace.md),
               _buildBrandItem(context, Icons.picture_as_pdf_rounded,
-                  'Exportação em PDF pronta para impressão'),
-              const SizedBox(height: AppSpacing.md),
+                  'Exportação vetorial em PDF pronta para impressão'),
+              const SizedBox(height: AppSpace.md),
               _buildBrandItem(
-                  context, Icons.cloud_done_rounded, 'Salvo na nuvem e offline'),
+                  context, Icons.cloud_done_rounded, 'Sincronização na nuvem e suporte offline'),
             ] else ...[
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: AppSpace.md),
               const Text(
                 'Busca integrada • PDF pronto • Nuvem e offline',
                 style: TextStyle(
@@ -267,25 +291,27 @@ class _LoginViewState extends State<LoginView> {
     ]);
   }
 
-  /// Card do formulário — cores 100% do tema (funciona no dark).
+  /// Card do formulário no padrão Modern SaaS (Linear / Vercel).
   Widget _buildFormCard(BuildContext context) {
     final theme = Theme.of(context);
     final isDesktop =
-        MediaQuery.of(context).size.width >= AppBreakpoints.desktop;
+        MediaQuery.of(context).size.width >= AppBreakpoint.desktop;
     final isDark = theme.brightness == Brightness.dark;
-    return Card(
-      elevation: AppElevation.md,
-      margin: EdgeInsets.zero,
-      color: theme.colorScheme.surface,
-      shadowColor: isDark ? Colors.black : null,
-      shape: RoundedRectangleBorder(
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF101418) : Colors.white,
         borderRadius: isDesktop
             ? const BorderRadius.horizontal(right: Radius.circular(AppRadius.xl))
-            : const BorderRadius.vertical(
-                bottom: Radius.circular(AppRadius.xl)),
+            : const BorderRadius.vertical(bottom: Radius.circular(AppRadius.xl)),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+          width: 1,
+        ),
+        boxShadow: AppShadow.lg(context),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xxl),
+        padding: const EdgeInsets.all(AppSpace.xxl),
         child: Form(
           key: _formKey,
           child: AutofillGroup(
@@ -299,7 +325,8 @@ class _LoginViewState extends State<LoginView> {
                     fontFamily: 'Rawline',
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    color: theme.textTheme.titleLarge?.color,
+                    letterSpacing: -0.3,
+                    color: isDark ? AppColors.textDark : AppColors.textLight,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),

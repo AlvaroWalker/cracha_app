@@ -5,14 +5,14 @@ import 'app_tokens.dart';
 
 /// Temas claro e escuro do app Campo Verde — Emissor de Crachás.
 ///
-/// Diretrizes:
-/// - Material 3
-/// - Cor de marca verde esmeralda
-/// - Botões: filledButton com radius 10, padding 14/20, fonte 14/600
-/// - Cards: elevation 0, borda hairline, radius 14
-/// - Inputs: filled surface, borda 1, focus 1.5 brand
-/// - Divider: cor border 0.5
-/// - Fonte Rawline aplicada em todo o textTheme
+/// Diretrizes Modern SaaS (Linear / Vercel):
+/// - Material 3 com personalização cirúrgica
+/// - Cor de marca verde esmeralda institucional
+/// - Botões: radius 10, padding 14/20, tipografia 14/600
+/// - Cards: elevation 0, borda hairline 1px elegante, radius 12
+/// - Inputs: preenchimento limpo, borda sutil, foco nítido em verde esmeralda
+/// - Divider: cor border suave
+/// - Tipografia: Fonte Rawline com letterSpacing refinado estilo Linear
 class AppTheme {
   AppTheme._();
 
@@ -47,7 +47,7 @@ class AppTheme {
       brightness: brightness,
       primary: brand,
       onPrimary: isDark ? AppColors.bgDark : Colors.white,
-      primaryContainer: brand.withValues(alpha: 0.12),
+      primaryContainer: brand.withValues(alpha: isDark ? 0.16 : 0.12),
       onPrimaryContainer: brand,
       secondary: brand,
       onSecondary: isDark ? AppColors.bgDark : Colors.white,
@@ -60,10 +60,10 @@ class AppTheme {
       surface: surface,
       onSurface: text,
       surfaceContainerHighest: isDark
-          ? const Color(0xFF1C2329)
-          : const Color(0xFFF1F5F9),
+          ? AppColors.surfaceSubtleDark
+          : AppColors.surfaceSubtleLight,
       outline: border,
-      outlineVariant: border.withValues(alpha: 0.5),
+      outlineVariant: isDark ? const Color(0xFF1E252D) : const Color(0xFFE2E8F0),
     );
 
     final base = isDark ? ThemeData.dark(useMaterial3: true) : ThemeData.light(useMaterial3: true);
@@ -74,11 +74,11 @@ class AppTheme {
       primaryColor: brand,
       scaffoldBackgroundColor: bg,
       canvasColor: bg,
-      dividerColor: border.withValues(alpha: 0.5),
+      dividerColor: border,
       dividerTheme: DividerThemeData(
-        color: border.withValues(alpha: 0.5),
-        thickness: 0.5,
-        space: 0.5,
+        color: border,
+        thickness: 1,
+        space: 1,
       ),
       cardTheme: CardThemeData(
         color: surface,
@@ -88,8 +88,8 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
           side: BorderSide(
-            color: border.withValues(alpha: 0.5),
-            width: 0.5,
+            color: border,
+            width: 1,
           ),
         ),
         clipBehavior: Clip.antiAlias,
@@ -97,34 +97,34 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: brand,
-          foregroundColor: isDark ? AppColors.bgDark : Colors.white,
-          disabledBackgroundColor: brand.withValues(alpha: 0.35),
-          disabledForegroundColor: Colors.white.withValues(alpha: 0.7),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          foregroundColor: isDark ? const Color(0xFF042F2E) : Colors.white,
+          disabledBackgroundColor: brand.withValues(alpha: 0.3),
+          disabledForegroundColor: Colors.white.withValues(alpha: 0.5),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           textStyle: const TextStyle(
             fontFamily: fontFamily,
-            fontSize: 14,
+            fontSize: 13.5,
             fontWeight: FontWeight.w600,
             height: 1.1,
-            letterSpacing: 0,
+            letterSpacing: 0.1,
           ),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: brand,
-          foregroundColor: isDark ? AppColors.bgDark : Colors.white,
+          foregroundColor: isDark ? const Color(0xFF042F2E) : Colors.white,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           textStyle: const TextStyle(
             fontFamily: fontFamily,
-            fontSize: 14,
+            fontSize: 13.5,
             fontWeight: FontWeight.w600,
             height: 1.1,
           ),
@@ -132,15 +132,15 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: brand,
+          foregroundColor: text,
           side: BorderSide(color: border, width: 1),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           textStyle: const TextStyle(
             fontFamily: fontFamily,
-            fontSize: 14,
+            fontSize: 13.5,
             fontWeight: FontWeight.w600,
             height: 1.1,
           ),
@@ -149,13 +149,13 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: brand,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           textStyle: const TextStyle(
             fontFamily: fontFamily,
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.w600,
             height: 1.1,
           ),
@@ -163,19 +163,19 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: surface,
-        hoverColor: border.withValues(alpha: 0.15),
+        fillColor: isDark ? const Color(0xFF0E1216) : surface,
+        hoverColor: border.withValues(alpha: 0.2),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         hintStyle: TextStyle(
           fontFamily: fontFamily,
-          fontSize: 14,
+          fontSize: 13.5,
           fontWeight: FontWeight.w400,
           color: muted,
         ),
         labelStyle: TextStyle(
           fontFamily: fontFamily,
-          fontSize: 14,
+          fontSize: 13.5,
           fontWeight: FontWeight.w500,
           color: muted,
         ),
@@ -233,7 +233,7 @@ class AppTheme {
           fontSize: 18,
           fontWeight: FontWeight.w700,
           height: 1.2,
-          letterSpacing: -0.2,
+          letterSpacing: -0.3,
         ),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
@@ -282,7 +282,7 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          side: BorderSide(color: border, width: 0.5),
+          side: BorderSide(color: border, width: 1),
         ),
         titleTextStyle: TextStyle(
           fontFamily: fontFamily,
@@ -290,40 +290,49 @@ class AppTheme {
           fontWeight: FontWeight.w700,
           color: text,
           height: 1.2,
+          letterSpacing: -0.3,
         ),
         contentTextStyle: TextStyle(
           fontFamily: fontFamily,
-          fontSize: 14,
+          fontSize: 13.5,
           fontWeight: FontWeight.w400,
           color: text,
-          height: 1.4,
+          height: 1.45,
         ),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: text,
+        backgroundColor: isDark ? const Color(0xFF1B222A) : text,
         behavior: SnackBarBehavior.floating,
         contentTextStyle: TextStyle(
           fontFamily: fontFamily,
-          color: isDark ? AppColors.bgDark : Colors.white,
-          fontSize: 14,
+          color: isDark ? AppColors.textDark : Colors.white,
+          fontSize: 13.5,
           fontWeight: FontWeight.w500,
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
+          side: BorderSide(
+            color: isDark ? AppColors.borderDark : Colors.transparent,
+            width: 1,
+          ),
         ),
       ),
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
-          color: text,
+          color: isDark ? const Color(0xFF222933) : text,
           borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(
+            color: isDark ? AppColors.borderHighlightDark : Colors.transparent,
+            width: 0.5,
+          ),
         ),
-        textStyle: TextStyle(
+        textStyle: const TextStyle(
           fontFamily: fontFamily,
-          color: isDark ? AppColors.bgDark : Colors.white,
-          fontSize: 12,
+          color: Colors.white,
+          fontSize: 11.5,
           fontWeight: FontWeight.w500,
         ),
-        waitDuration: const Duration(milliseconds: 400),
+        waitDuration: const Duration(milliseconds: 300),
       ),
       splashColor: brand.withValues(alpha: 0.08),
       highlightColor: brand.withValues(alpha: 0.04),
@@ -336,17 +345,17 @@ class AppTheme {
       displayLarge: TextStyle(
         fontFamily: fontFamily,
         fontSize: 48,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
         height: 1.05,
-        letterSpacing: -0.96,
+        letterSpacing: -1.2,
         color: text,
       ),
       displayMedium: TextStyle(
         fontFamily: fontFamily,
         fontSize: 36,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
         height: 1.1,
-        letterSpacing: -0.72,
+        letterSpacing: -0.9,
         color: text,
       ),
       displaySmall: TextStyle(
@@ -354,38 +363,38 @@ class AppTheme {
         fontSize: 28,
         fontWeight: FontWeight.w700,
         height: 1.15,
-        letterSpacing: -0.56,
+        letterSpacing: -0.6,
         color: text,
       ),
       // title
       titleLarge: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 22,
+        fontSize: 20,
         fontWeight: FontWeight.w700,
         height: 1.2,
-        letterSpacing: -0.44, // -0.02em
+        letterSpacing: -0.4,
         color: text,
       ),
       titleMedium: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: FontWeight.w600,
-        height: 1.2,
-        letterSpacing: -0.36, // -0.02em
+        height: 1.25,
+        letterSpacing: -0.2,
         color: text,
       ),
       titleSmall: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: FontWeight.w600,
         height: 1.3,
-        letterSpacing: -0.30, // -0.02em
+        letterSpacing: -0.1,
         color: text,
       ),
       // body
       bodyLarge: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: FontWeight.w400,
         height: 1.45,
         letterSpacing: 0,
@@ -393,7 +402,7 @@ class AppTheme {
       ),
       bodyMedium: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 14,
+        fontSize: 13.5,
         fontWeight: FontWeight.w400,
         height: 1.45,
         letterSpacing: 0,
@@ -410,7 +419,7 @@ class AppTheme {
       // label
       labelLarge: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 14,
+        fontSize: 13.5,
         fontWeight: FontWeight.w600,
         height: 1.2,
         letterSpacing: 0,
@@ -427,9 +436,9 @@ class AppTheme {
       labelSmall: TextStyle(
         fontFamily: fontFamily,
         fontSize: 11,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600,
         height: 1.2,
-        letterSpacing: 0.2,
+        letterSpacing: 0.3,
         color: muted,
       ),
     );

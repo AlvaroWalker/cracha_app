@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_tokens.dart';
 
-/// Card padronizado moderno com elevação, borda sutil e padding consistentes.
-/// Adapta-se ao tema (claro/escuro).
+/// Card padronizado moderno (Linear / Vercel):
+/// - Superfície limpa com borda hairline
+/// - Micro-sombra elegante em múltiplas camadas
+/// - Hover/tap suave
 class AppCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -32,21 +34,21 @@ class AppCard extends StatelessWidget {
     final radius = borderRadius ?? BorderRadius.circular(AppRadius.lg);
     final effectiveBorder = border ??
         BorderSide(
-          color: isDark ? AppColors.darkBorder : AppColors.borderColor,
+          color: isDark ? AppColors.borderDark : AppColors.borderLight,
           width: 1,
         );
     final effectiveColor = color ??
-        (isDark ? AppColors.darkCard : AppColors.cardColor);
+        (isDark ? AppColors.surfaceDark : AppColors.surfaceLight);
 
     final card = Container(
       decoration: BoxDecoration(
         color: effectiveColor,
         borderRadius: radius,
         border: Border.fromBorderSide(effectiveBorder),
-        boxShadow: isDark ? AppColors.darkShadowList : AppColors.defaultShadow,
+        boxShadow: AppShadow.sm(context),
       ),
       child: Padding(
-        padding: padding ?? const EdgeInsets.all(AppSpacing.lg),
+        padding: padding ?? const EdgeInsets.all(AppSpace.lg),
         child: child,
       ),
     );
@@ -57,6 +59,9 @@ class AppCard extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: radius,
+          hoverColor: isDark
+              ? Colors.white.withValues(alpha: 0.03)
+              : Colors.black.withValues(alpha: 0.02),
           child: card,
         ),
       );

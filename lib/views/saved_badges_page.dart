@@ -256,14 +256,14 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
       ),
       body: Column(
         children: [
-          // ── Métricas & Estatísticas ──
+          // ── Métricas & Estatísticas no Padrão SaaS (Linear KPI) ──
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : Colors.white,
+              color: isDark ? AppColors.surfaceDark : Colors.white,
               border: Border(
                 bottom: BorderSide(
-                  color: isDark ? AppColors.darkBorder : AppColors.borderColor,
+                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
                   width: 1,
                 ),
               ),
@@ -272,41 +272,89 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
               children: [
                 _buildMetricChip(
                   icon: Icons.badge_rounded,
-                  label: 'Total',
+                  label: 'Total de Crachás',
                   value: '${bm.badges.length}',
                   color: primary,
                   isDark: isDark,
                 ),
-                const SizedBox(width: AppSpacing.md),
+                const SizedBox(width: 12),
                 _buildMetricChip(
                   icon: Icons.account_balance_rounded,
                   label: 'Secretarias',
                   value: '${secretariasContagem.length}',
-                  color: isDark ? AppColors.darkAccent : AppColors.accentColor,
+                  color: isDark ? AppColors.brandDark : AppColors.brandLight,
                   isDark: isDark,
                 ),
                 if (hasSelection) ...[
-                  const SizedBox(width: AppSpacing.md),
+                  const SizedBox(width: 12),
                   _buildMetricChip(
                     icon: Icons.check_circle_rounded,
                     label: 'Selecionados',
                     value: '${selectedIds.length}',
-                    color: AppColors.successColor,
+                    color: AppColors.success,
                     isDark: isDark,
                   ),
                 ],
+                const Spacer(),
+                // Alternador de Visualização (Grade / Lista Tabela)
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF14191F) : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(
+                      color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: 'Visualização em Grade',
+                        icon: Icon(
+                          Icons.grid_view_rounded,
+                          size: 18,
+                          color: !_isTableView
+                              ? primary
+                              : (isDark ? AppColors.mutedDark : AppColors.mutedLight),
+                        ),
+                        onPressed: () {
+                          if (_isTableView) setState(() => _isTableView = false);
+                        },
+                      ),
+                      Container(
+                        width: 1,
+                        height: 20,
+                        color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                      ),
+                      IconButton(
+                        tooltip: 'Visualização em Lista / Tabela',
+                        icon: Icon(
+                          Icons.view_list_rounded,
+                          size: 18,
+                          color: _isTableView
+                              ? primary
+                              : (isDark ? AppColors.mutedDark : AppColors.mutedLight),
+                        ),
+                        onPressed: () {
+                          if (!_isTableView) setState(() => _isTableView = true);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
 
-          // ── Barra de Busca & Filtros ──
+          // ── Barra de Busca & Filtros Integrada ──
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurfaceVariant : AppColors.surfaceSubtle,
+              color: isDark ? const Color(0xFF0E1317) : const Color(0xFFF8FAFC),
               border: Border(
                 bottom: BorderSide(
-                  color: isDark ? AppColors.darkBorder : AppColors.borderColor,
+                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
                   width: 1,
                 ),
               ),
@@ -322,32 +370,40 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                         controller: _searchController,
                         style: TextStyle(
                           fontFamily: 'Rawline',
-                          fontSize: 14,
-                          color: isDark ? AppColors.darkText : AppColors.textColor,
+                          fontSize: 13.5,
+                          color: isDark ? AppColors.textDark : AppColors.textLight,
                         ),
                         decoration: InputDecoration(
-                          hintText: 'Pesquisar por nome, cargo ou secretaria...',
-                          prefixIcon: Icon(Icons.search_rounded, color: primary, size: 20),
+                          hintText: 'Buscar por nome do servidor, cargo ou secretaria...',
+                          prefixIcon: Icon(
+                            Icons.search_rounded,
+                            color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+                            size: 18,
+                          ),
                           suffixIcon: _searchController.text.isNotEmpty
                               ? IconButton(
-                                  icon: const Icon(Icons.clear_rounded, size: 18),
+                                  icon: const Icon(Icons.clear_rounded, size: 16),
                                   onPressed: () => _searchController.clear(),
                                 )
                               : null,
                           filled: true,
-                          fillColor: isDark ? AppColors.darkSurface : Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          fillColor: isDark ? AppColors.surfaceDark : Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.borderColor),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            borderSide: BorderSide(
+                              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.borderColor),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            borderSide: BorderSide(
+                              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: primary, width: 1.8),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            borderSide: BorderSide(color: primary, width: 1.5),
                           ),
                         ),
                       ),
@@ -355,17 +411,17 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                     if (filteredBadges.isNotEmpty &&
                         selectedIds.length < bm.badges.length) ...[
                       const SizedBox(width: 8),
-                      AppButton.text(
-                        label: 'Todos',
+                      AppButton.secondary(
+                        label: 'Selecionar Todos',
                         icon: Icons.select_all_rounded,
                         size: AppButtonSize.sm,
                         onPressed: () => bm.selectAllBadges(),
                       ),
                     ],
                     if (_temFiltrosAtivos) ...[
-                      const SizedBox(width: AppSpacing.sm),
+                      const SizedBox(width: 8),
                       AppButton.text(
-                        label: 'Limpar',
+                        label: 'Limpar Filtros',
                         icon: Icons.filter_alt_off_rounded,
                         size: AppButtonSize.sm,
                         onPressed: _limparFiltros,
@@ -524,15 +580,25 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: isDark ? 0.15 : 0.08),
+        color: isDark ? const Color(0xFF14191F) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+          width: 1,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: isDark ? 0.16 : 0.10),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Icon(icon, size: 16, color: color),
+          ),
+          const SizedBox(width: 10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -541,18 +607,20 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                 value,
                 style: TextStyle(
                   fontFamily: 'Rawline',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w900,
-                  color: color,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? AppColors.textDark : AppColors.textLight,
+                  height: 1.1,
                 ),
               ),
+              const SizedBox(height: 2),
               Text(
                 label,
                 style: TextStyle(
                   fontFamily: 'Rawline',
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? AppColors.darkTextSecondary : AppColors.subtitleColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
                 ),
               ),
             ],
@@ -570,38 +638,58 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
     required Color primary,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.full),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: isActive
-              ? primary.withValues(alpha: isDark ? 0.2 : 0.12)
-              : (isDark ? AppColors.darkSurface : Colors.white),
-          borderRadius: BorderRadius.circular(AppRadius.full),
-          border: Border.all(
-            color: isActive ? primary : (isDark ? AppColors.darkBorder : AppColors.borderColor),
-            width: 1,
+    final borderColor = isActive
+        ? primary
+        : (isDark ? AppColors.borderDark : AppColors.borderLight);
+    final bg = isActive
+        ? primary.withValues(alpha: isDark ? 0.16 : 0.10)
+        : (isDark ? const Color(0xFF14191F) : Colors.white);
+
+    return Material(
+      color: bg,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        hoverColor: isDark
+            ? Colors.white.withValues(alpha: 0.04)
+            : Colors.black.withValues(alpha: 0.03),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: borderColor, width: 1),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: isActive ? primary : (isDark ? AppColors.darkTextSecondary : AppColors.subtitleColor)),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Rawline',
-                fontSize: 12,
-                fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-                color: isActive ? primary : (isDark ? AppColors.darkText : AppColors.textColor),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 14,
+                color: isActive
+                    ? primary
+                    : (isDark ? AppColors.mutedDark : AppColors.mutedLight),
               ),
-            ),
-            const SizedBox(width: 4),
-            Icon(Icons.arrow_drop_down_rounded, size: 18, color: isActive ? primary : AppColors.subtitleColor),
-          ],
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'Rawline',
+                  fontSize: 12,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                  color: isActive
+                      ? primary
+                      : (isDark ? AppColors.textDark : AppColors.textLight),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.unfold_more_rounded,
+                size: 14,
+                color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+              ),
+            ],
+          ),
         ),
       ),
     );

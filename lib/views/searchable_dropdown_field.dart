@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../utils/app_colors.dart';
+import '../utils/app_tokens.dart';
 
-/// Dropdown com campo de busca, ideal para listas longas (ex: secretarias).
-/// Popup modal com TextField no topo para filtrar opções.
+/// Dropdown com campo de busca no padrão Linear / Vercel:
+/// - Trigger no formato idêntico ao AppTextField
+/// - Modal suspenso com cantos suaves, borda hairline e busca com filtro instantâneo
 class SearchableDropdownField extends StatefulWidget {
   final String? value;
   final List<String> items;
@@ -60,11 +62,10 @@ class _SearchableDropdownFieldState extends State<SearchableDropdownField> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final textColor = theme.textTheme.bodyLarge?.color;
-    final hintColor = isDark ? AppColors.darkHint : AppColors.subtitleColor;
-    final primary = theme.colorScheme.primary;
-    final fillColor = isDark ? AppColors.darkSurfaceVariant : Colors.white;
-    final borderColor = isDark ? AppColors.darkBorder : Colors.grey.shade200;
+    final textColor = isDark ? AppColors.textDark : AppColors.textLight;
+    final mutedColor = isDark ? AppColors.mutedDark : AppColors.mutedLight;
+    final borderColor = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final fillColor = isDark ? const Color(0xFF0E1317) : Colors.white;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,46 +75,50 @@ class _SearchableDropdownFieldState extends State<SearchableDropdownField> {
             widget.labelText!,
             style: TextStyle(
               fontFamily: 'Rawline',
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
               color: textColor,
+              letterSpacing: 0.1,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
         ],
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: _openPopup,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
               decoration: BoxDecoration(
                 color: fillColor,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: borderColor, width: 1.5),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(color: borderColor, width: 1),
               ),
               child: Row(
                 children: [
                   if (widget.prefixIcon != null) ...[
-                    Icon(widget.prefixIcon, color: primary, size: 22),
-                    const SizedBox(width: 12),
+                    Icon(widget.prefixIcon, color: mutedColor, size: 18),
+                    const SizedBox(width: 10),
                   ],
                   Expanded(
                     child: Text(
                       widget.value ?? widget.hintText,
                       style: TextStyle(
                         fontFamily: 'Rawline',
-                        fontSize: 15,
+                        fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: widget.value != null ? textColor : hintColor,
+                        color: widget.value != null ? textColor : mutedColor,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Icon(Icons.keyboard_arrow_down_rounded, color: hintColor),
+                  Icon(
+                    Icons.unfold_more_rounded,
+                    color: mutedColor,
+                    size: 18,
+                  ),
                 ],
               ),
             ),
@@ -124,7 +129,7 @@ class _SearchableDropdownFieldState extends State<SearchableDropdownField> {
   }
 }
 
-/// Popup interno do dropdown com busca.
+/// Modal interno do dropdown com campo de busca
 class _DropdownPopup extends StatefulWidget {
   final List<String> items;
   final String? value;
@@ -172,40 +177,70 @@ class _DropdownPopupState extends State<_DropdownPopup> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
-    final textColor = theme.textTheme.bodyLarge?.color;
-    final hintColor = isDark ? AppColors.darkHint : AppColors.subtitleColor;
-    final fillColor = isDark ? AppColors.darkSurfaceVariant : AppColors.backgroundColor;
-    final borderColor = isDark ? AppColors.darkBorder : Colors.grey.shade200;
-    final selectedBg = primary.withValues(alpha: isDark ? 0.15 : 0.08);
-    final dialogBg = theme.dialogTheme.backgroundColor ?? theme.colorScheme.surface;
+    final textColor = isDark ? AppColors.textDark : AppColors.textLight;
+    final mutedColor = isDark ? AppColors.mutedDark : AppColors.mutedLight;
+    final borderColor = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final dialogBg = isDark ? const Color(0xFF12161B) : Colors.white;
 
     return Dialog(
       backgroundColor: dialogBg,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        side: BorderSide(color: borderColor, width: 1),
+      ),
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: widget.maxHeight + 120),
+        constraints: BoxConstraints(
+          maxWidth: 480,
+          maxHeight: widget.maxHeight + 100,
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Campo de busca
+              // Header com Título e Fechar
+              Row(
+                children: [
+                  Text(
+                    'Selecionar Secretaria',
+                    style: TextStyle(
+                      fontFamily: 'Rawline',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: textColor,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 18),
+                    onPressed: () => Navigator.pop(context),
+                    splashRadius: 16,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Campo de busca com estilo Linear
               TextField(
                 controller: _searchController,
                 autofocus: true,
                 onChanged: _onSearch,
                 style: TextStyle(
                   fontFamily: 'Rawline',
-                  fontSize: 14,
+                  fontSize: 13.5,
                   color: textColor,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Buscar...',
-                  hintStyle: TextStyle(fontFamily: 'Rawline', color: hintColor),
-                  prefixIcon: Icon(Icons.search_rounded, color: primary, size: 20),
+                  hintText: 'Filtrar por nome da secretaria...',
+                  hintStyle: TextStyle(
+                    fontFamily: 'Rawline',
+                    fontSize: 13,
+                    color: mutedColor,
+                  ),
+                  prefixIcon: Icon(Icons.search_rounded, color: mutedColor, size: 18),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.clear_rounded, size: 18),
+                          icon: const Icon(Icons.clear_rounded, size: 16),
                           onPressed: () {
                             _searchController.clear();
                             _onSearch('');
@@ -213,81 +248,92 @@ class _DropdownPopupState extends State<_DropdownPopup> {
                         )
                       : null,
                   filled: true,
-                  fillColor: fillColor,
+                  fillColor: isDark ? const Color(0xFF0A0D10) : const Color(0xFFF8FAFC),
                   contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     borderSide: BorderSide(color: borderColor),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     borderSide: BorderSide(color: borderColor),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: const BorderRadius.all(Radius.circular(10)),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     borderSide: BorderSide(color: primary, width: 1.5),
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
+
               // Lista filtrada
               Flexible(
                 child: _filtered.isEmpty
                     ? Padding(
                         padding: const EdgeInsets.all(24),
                         child: Text(
-                          'Nenhum resultado encontrado.',
+                          'Nenhuma secretaria encontrada.',
                           style: TextStyle(
                             fontFamily: 'Rawline',
-                            color: hintColor,
+                            fontSize: 13,
+                            color: mutedColor,
                           ),
                         ),
                       )
-                    : ListView.builder(
+                    : ListView.separated(
                         shrinkWrap: true,
                         itemCount: _filtered.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 2),
                         itemBuilder: (context, i) {
                           final item = _filtered[i];
                           final isSelected = item == widget.value;
-                          return ListTile(
-                            dense: true,
-                            selected: isSelected,
-                            selectedTileColor: selectedBg,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8)),
-                            title: Text(
-                              item,
-                              style: TextStyle(
-                                fontFamily: 'Rawline',
-                                fontSize: 14,
-                                fontWeight: isSelected
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                                color: isSelected ? primary : textColor,
+
+                          return Material(
+                            color: isSelected
+                                ? primary.withValues(alpha: isDark ? 0.16 : 0.10)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            child: InkWell(
+                              onTap: () => Navigator.pop(context, item),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              hoverColor: isDark
+                                  ? Colors.white.withValues(alpha: 0.04)
+                                  : Colors.black.withValues(alpha: 0.03),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        item,
+                                        style: TextStyle(
+                                          fontFamily: 'Rawline',
+                                          fontSize: 13,
+                                          fontWeight: isSelected
+                                              ? FontWeight.w700
+                                              : FontWeight.w500,
+                                          color: isSelected ? primary : textColor,
+                                        ),
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      Icon(
+                                        Icons.check_rounded,
+                                        size: 16,
+                                        color: primary,
+                                      ),
+                                  ],
+                                ),
                               ),
                             ),
-                            trailing: isSelected
-                                ? Icon(Icons.check_rounded, color: primary, size: 20)
-                                : null,
-                            onTap: () => Navigator.pop(context, item),
                           );
                         },
                       ),
               ),
-              // Botão limpar seleção
-              if (widget.value != null) ...[
-                const SizedBox(height: 4),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    onPressed: () => Navigator.pop(context, '__clear__'),
-                    icon: const Icon(Icons.clear_rounded, size: 16),
-                    label: const Text('Limpar seleção',
-                        style: TextStyle(fontFamily: 'Rawline', fontSize: 13)),
-                  ),
-                ),
-              ],
             ],
           ),
         ),
