@@ -9,21 +9,25 @@ import '../views/app_button.dart';
 import '../views/app_text_field.dart';
 
 /// Serviço central de autenticação e cliente Supabase.
-/// Login único: alvarowalker@gmail.com (criado no painel).
+///
+/// Login por USUÁRIO (Rota A): a tela pede só o username; o mapeamento
+/// `usuario -> usuario@cracha.local` acontece aqui, transparente para o
+/// Supabase (que exige um email interno). Usuários: alvaro, dani.
 class AuthService {
+  /// Domínio sintético usado no mapeamento username -> email interno.
+  static const String _syntheticDomain = 'cracha.local';
+
+  /// Mapeia username digitado para o email sintético do Supabase.
+  /// Se já vier um email (contém '@'), devolve como está.
+  static String emailFromUsername(String username) {
+    final u = username.trim().toLowerCase();
+    if (u.contains('@')) return u;
+    return '$u@$_syntheticDomain';
+  }
+
   static SupabaseClient get client => Supabase.instance.client;
 
   static bool get isSignedIn => client.auth.currentSession != null;
-
-  /// Email salvo para pré-preencher o campo ("sistema de usuário").
-  static Future<String> getSavedEmail() async {
-    // shared_preferences via supabase (session persistente) — usa o próprio package
-    try {
-      final session = client.auth.currentSession;
-      if (session != null) return session.user.email ?? '';
-    } catch (_) {}
-    return '';
-  }
 
   static Future<AuthResponse> signIn(String email, String password) {
     return client.auth.signInWithPassword(email: email, password: password);
@@ -49,7 +53,7 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
-  final _emailController = TextEditingController(text: 'alvarowalker@gmail.com');
+  final _usernameController = TextEditingController(text: 'alvaro');
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   final _emailFocus = FocusNode();
@@ -60,7 +64,7 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     _emailFocus.dispose();
     _passwordFocus.dispose();
@@ -75,14 +79,14 @@ class _LoginViewState extends State<LoginView> {
     });
     try {
       await AuthService.signIn(
-        _emailController.text.trim(),
+        AuthService.emailFromUsername(_usernameController.text),
         _passwordController.text,
       );
       // AuthGate reage via stream; nada a fazer aqui
     } on AuthApiException catch (e) {
       setState(() {
         _erro = e.message.contains('Invalid login')
-            ? 'Email ou senha incorretos.'
+            ? 'Usuário ou senha incorretos.'
             : 'Erro ao entrar: ${e.message}';
         _loading = false;
       });
@@ -210,20 +214,21 @@ class _LoginViewState extends State<LoginView> {
                           ),
                           const SizedBox(height: AppSpace.xl),
                           Semantics(
-                            label: 'Campo de e-mail',
+                            label: 'Campo de usuário',
                             textField: true,
                             child: AppTextField(
-                              controller: _emailController,
-                              hintText: 'E-mail',
-                              labelText: 'E-mail',
+                              controller: _usernameController,
+                              hintText: 'Usuário',
+                              labelText: 'Usuário',
                               prefixIcon: Icons.person_outline_rounded,
-                              keyboardType: TextInputType.emailAddress,
+                              keyboardType: TextInputType.text,
+                              textCapitalization: TextCapitalization.none,
                               focusNode: _emailFocus,
                               onSubmitted: (_) =>
                                   _passwordFocus.requestFocus(),
                               validator: (v) =>
-                                  (v == null || !v.contains('@'))
-                                      ? 'Informe um e-mail válido'
+                                  (v == null || v.trim().isEmpty)
+                                      ? 'Digite seu usuário'
                                       : null,
                             ),
                           ),
