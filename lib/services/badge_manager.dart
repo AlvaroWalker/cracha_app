@@ -1,7 +1,45 @@
 import 'package:flutter/foundation.dart';
+
 import '../models/badge_data.dart';
 import '../services/badge_storage_service.dart';
 import 'badge_cloud_service.dart';
+import 'retry_queue.dart';
+
+/// Resultado de uma operação de escrita, honesto sobre onde o dado ficou.
+enum SaveOutcome {
+  /// Salvo na nuvem (e espelhado no cache local).
+  synced,
+
+  /// Salvo só no dispositivo; entrou na fila para subir quando houver rede.
+  pendingSync,
+
+  /// Nada foi salvo.
+  failed,
+}
+
+/// Resultado de exclusão em lote: quantos saíram, quantos ficaram.
+class BatchDeleteResult {
+  final int deleted;
+  final int failed;
+  final bool cloudPending;
+
+  const BatchDeleteResult({
+    required this.deleted,
+    required this.failed,
+    this.cloudPending = false,
+  });
+
+  bool get allOk => failed == 0;
+  String get message {
+    if (allOk && !cloudPending) return '$deleted crachás excluídos.';
+    if (allOk && cloudPending) {
+      return '$deleted crachás excluídos neste dispositivo. '
+          'A exclusão será concluída na nuvem quando houver conexão.';
+    }
+    return '$deleted de ${deleted + failed} crachás excluídos. '
+        '$failed falharam — tente novamente.';
+  }
+}
 
 class BadgeManager extends ChangeNotifier {
   List<BadgeData> _badges = [];
@@ -21,11 +59,30 @@ class BadgeManager extends ChangeNotifier {
   bool _cloudAvailable = true;
   bool get cloudAvailable => _cloudAvailable;
 
+  /// Quantidade de operações aguardando upload/exclusão na nuvem.
+  int _pendingOps = 0;
+  int get pendingOps => _pendingOps;
+
   /// Referência da foto no último save bem-sucedido na nuvem.
   /// Se a foto atual for a MESMA instância, o upload é pulado.
   Uint8List? _lastSavedPhoto;
-  // Inicialização - carrega os crachás salvos (nuvem primeiro, local como fallback)
-  Future<void> initBadges() async {
+
+  /// Guarda de reentrância: Home e a galeria chamam `initBadges()` cada um em
+  /// post-frame. Sem esta guarda, os dois bootavam em paralelo e baixavam
+  /// todas as fotos duas vezes.
+  Future<void>? _initInFlight;
+
+  /// Inicializa e carrega os crachás salvos (nuvem primeiro, local como
+  /// fallback). Chamadas concorrentes compartilham a mesma promise.
+  Future<void> initBadges() {
+    final inFlight = _initInFlight;
+    if (inFlight != null) return inFlight;
+    final future = _loadBadges();
+    _initInFlight = future;
+    return future.whenComplete(() => _initInFlight = null);
+  }
+
+  Future<void> _loadBadges() async {
     _isLoading = true;
     notifyListeners();
 
@@ -39,7 +96,10 @@ class BadgeManager extends ChangeNotifier {
         _cloudAvailable = true;
         // Espelha no local para uso offline
         await BadgeStorageService.replaceAll(_badges);
-      } catch (_) {
+        // Rede voltou: esvazia a fila de operações pendentes.
+        await _drainRetryQueue();
+      } catch (e) {
+        debugPrint('[BadgeManager] Nuvem indisponível no boot: $e');
         _cloudAvailable = false;
         _badges = await BadgeStorageService.getBadgeList();
       }
@@ -55,6 +115,64 @@ class BadgeManager extends ChangeNotifier {
       _currentBadge = BadgeData(); // Mantém o fallback
     }
 
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  /// Esvazia a fila de operações pendentes chamando a nuvem.
+  /// Best-effort: falha mantém a fila intacta para a próxima tentativa.
+  Future<void> _drainRetryQueue() async {
+    if (RetryQueue.isEmpty) {
+      _pendingOps = 0;
+      return;
+    }
+    final saves = RetryQueue.ofType(PendingOpType.saveBadge);
+    final deletes = RetryQueue.ofType(PendingOpType.deleteBadge);
+
+    // Exclusões primeiro: um crachá excluído não deve ser recriado por um
+    // save enfileirado antes dele.
+    for (final op in [...deletes, ...saves]) {
+      try {
+        if (op.type == PendingOpType.deleteBadge) {
+          await BadgeCloudService.deleteBadge(
+            BadgeData(id: op.id),
+          );
+        } else {
+          final badge = BadgeData(
+            id: op.id,
+            name: op.payload['nome'] as String? ?? '',
+            role: op.payload['cargo'] as String? ?? '',
+            department: op.payload['secretaria'] as String? ?? '',
+          );
+          await BadgeCloudService.saveBadge(badge);
+        }
+        await RetryQueue.remove(op.id, type: op.type);
+      } catch (e) {
+        debugPrint('[BadgeManager] Retry falhou para ${op.id}: $e');
+        final exhausted = await RetryQueue.markAttempt(op.id);
+        if (exhausted) {
+          debugPrint('[BadgeManager]_operation ${op.id} descartada após 3 tentativas.');
+        }
+        // Para de tentar este lote: a rede ainda está ruim.
+        break;
+      }
+    }
+    _pendingOps = RetryQueue.length;
+  }
+
+  /// Reprocessa a fila de pendências. Público para a UI oferecer um
+  /// "Tentar sincronizar agora".
+  Future<void> retryPendingSync() async {
+    if (!_cloudAvailable) return;
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await _drainRetryQueue();
+      _badges = await BadgeCloudService.fetchBadges();
+      await BadgeStorageService.replaceAll(_badges);
+    } catch (e) {
+      debugPrint('[BadgeManager] Retry manual falhou: $e');
+    }
     _isLoading = false;
     notifyListeners();
   }
@@ -92,6 +210,7 @@ class BadgeManager extends ChangeNotifier {
     String? role,
     String? department,
     Uint8List? photo,
+    bool clearPhoto = false,
   }) {
     // Converte nome e cargo para maiúsculas
     final String? upperName = name?.toUpperCase();
@@ -112,82 +231,95 @@ class BadgeManager extends ChangeNotifier {
         role: upperRole,
         department: department,
         photo: photo,
+        clearPhoto: clearPhoto,
       );
     }
     notifyListeners();
   }
 
   /// Remove a foto do crachá atual (ação "Remover" da zona de fotografia).
-  /// Método aditivo — não altera nenhum comportamento existente.
   void clearCurrentPhoto() {
     final current = _currentBadge;
     if (current == null) return;
-    _currentBadge = BadgeData(
-      id: current.id,
-      name: current.name,
-      role: current.role,
-      department: current.department,
-      createdAt: current.createdAt,
-    );
+    _currentBadge = current.copyWith(clearPhoto: true);
+    // A foto mudou de instância: o próximo save precisa reenviar/limpar.
+    _lastSavedPhoto = null;
     notifyListeners();
   }
 
+  /// Payload mínimo para a fila de retry (sem bytes de foto).
+  Map<String, dynamic> _payloadFor(BadgeData badge) => {
+        'nome': badge.name,
+        'cargo': badge.role,
+        'secretaria': badge.department,
+      };
+
   // Salvar ou atualizar o crachá atual
-  Future<bool> saveCurrentBadge() async {
-    if (_currentBadge == null) return false;
+  Future<SaveOutcome> saveCurrentBadge() async {
+    final badge = _currentBadge;
+    if (badge == null) return SaveOutcome.failed;
 
     _isLoading = true;
     notifyListeners();
 
-    try {
-      String? cloudError;
-      if (_cloudAvailable) {
-        // Nuvem é a fonte da verdade; local é apenas cache offline.
-        // Pula o upload se a foto é a mesma do último save (mesma instância).
-        final photoUnchanged =
-            identical(_currentBadge!.photo, _lastSavedPhoto);
-        try {
-          await BadgeCloudService.saveBadge(
-            _currentBadge!,
-            skipPhotoUpload: photoUnchanged,
-          );
-          _lastSavedPhoto = _currentBadge!.photo;
-        } catch (e) {
-          debugPrint('Erro ao salvar na nuvem: $e');
-          cloudError = e.toString();
+    // Nuvem é a fonte da verdade; local é apenas cache offline.
+    // Pula o upload se a foto é a mesma do último save (mesma instância).
+    final photoUnchanged = identical(badge.photo, _lastSavedPhoto);
+    var cloudError = false;
+
+    if (_cloudAvailable) {
+      try {
+        await BadgeCloudService.saveBadge(badge, skipPhotoUpload: photoUnchanged);
+        _lastSavedPhoto = badge.photo;
+        await RetryQueue.remove(badge.id, type: PendingOpType.saveBadge);
+      } catch (e) {
+        debugPrint('[BadgeManager] Erro ao salvar na nuvem: $e');
+        cloudError = true;
+        // Só enfileira se a falha for transitória. RLS/permissão não melhora
+        // com retry — enfileirar seria só spam com 3 tentativas inúteis.
+        if (e is CloudUnavailableException) {
+          await RetryQueue.add(PendingOperation(
+            id: badge.id,
+            type: PendingOpType.saveBadge,
+            payload: _payloadFor(badge),
+            createdAt: DateTime.now(),
+          ));
+          _pendingOps = RetryQueue.length;
         }
       }
-
-      // Espelha no local (pode falhar por cota do localStorage sem invalidar o save)
-      final localOk = await BadgeStorageService.saveBadge(_currentBadge!);
-
-      // Sucesso = nuvem OK (local é opcional) OU sem nuvem e local OK
-      final success = _cloudAvailable
-          ? (cloudError == null)
-          : localOk;
-
-      if (_cloudAvailable && localOk) {
-        _badges = await BadgeStorageService.getBadgeList();
-      } else if (_cloudAvailable) {
-        // Local falhou (cota): recarrega a lista direto da nuvem
-        try {
-          _badges = await BadgeCloudService.fetchBadges();
-        } catch (_) {}
-      } else if (localOk) {
-        _badges = await BadgeStorageService.getBadgeList();
-      }
-
-      // Se a nuvem falhou de verdade, derruba para modo local nesta sessão
-      if (cloudError != null) _cloudAvailable = false;
-
-      _isLoading = false;
-      notifyListeners();
-      return success;
-    } catch (e) {
-      _isLoading = false;
-      notifyListeners();
-      return false;
+    } else {
+      // Sem nuvem: enfileira para subir no próximo boot com rede.
+      await RetryQueue.add(PendingOperation(
+        id: badge.id,
+        type: PendingOpType.saveBadge,
+        payload: _payloadFor(badge),
+        createdAt: DateTime.now(),
+      ));
+      _pendingOps = RetryQueue.length;
     }
+
+    // Espelha no local (pode falhar por cota do localStorage sem invalidar
+    // o save na nuvem).
+    final localOk = await BadgeStorageService.saveBadge(badge);
+
+    if (localOk) {
+      _badges = await BadgeStorageService.getBadgeList();
+    } else if (_cloudAvailable && !cloudError) {
+      // Local falhou (cota): recarrega a lista direto da nuvem
+      try {
+        _badges = await BadgeCloudService.fetchBadges();
+      } catch (_) {}
+    }
+
+    // Se a nuvem falhou de verdade, derruba para modo local nesta sessão
+    if (cloudError) _cloudAvailable = false;
+
+    _isLoading = false;
+    notifyListeners();
+
+    if (_cloudAvailable && !cloudError) return SaveOutcome.synced;
+    if (localOk) return SaveOutcome.pendingSync;
+    return SaveOutcome.failed;
   }
 
   // Excluir um crachá pelo ID
@@ -196,21 +328,37 @@ class BadgeManager extends ChangeNotifier {
     notifyListeners();
 
     try {
-      bool success;
-      if (_cloudAvailable) {
-        final badge = _badges.where((b) => b.id == id).firstOrNull;
-        if (badge != null) {
+      var cloudError = false;
+      final badge = _badges.where((b) => b.id == id).firstOrNull;
+      if (_cloudAvailable && badge != null) {
+        try {
           await BadgeCloudService.deleteBadge(badge);
+          await RetryQueue.remove(id, type: PendingOpType.deleteBadge);
+        } catch (e) {
+          debugPrint('[BadgeManager] Erro ao excluir na nuvem: $e');
+          cloudError = true;
+          if (e is CloudUnavailableException) {
+            await RetryQueue.add(PendingOperation(
+              id: id,
+              type: PendingOpType.deleteBadge,
+              payload: const {},
+              createdAt: DateTime.now(),
+            ));
+            _pendingOps = RetryQueue.length;
+          }
         }
       }
-      success = await BadgeStorageService.deleteBadge(id);
+      if (cloudError) _cloudAvailable = false;
 
+      final success = await BadgeStorageService.deleteBadge(id);
       if (success) {
         _badges = await BadgeStorageService.getBadgeList();
+        _selectedBadgeIds.remove(id);
 
         // Se o crachá excluído era o atual, define um novo atual
         if (_currentBadge?.id == id) {
           _currentBadge = _badges.isNotEmpty ? _badges.first : BadgeData();
+          _lastSavedPhoto = _currentBadge?.photo;
         }
       }
 
@@ -218,6 +366,7 @@ class BadgeManager extends ChangeNotifier {
       notifyListeners();
       return success;
     } catch (e) {
+      debugPrint('[BadgeManager] Erro ao excluir: $e');
       _isLoading = false;
       notifyListeners();
       return false;
@@ -248,38 +397,77 @@ class BadgeManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Excluir os crachás selecionados em lote
-  Future<void> deleteSelectedBadges() async {
-    if (_selectedBadgeIds.isEmpty) return;
+  /// Exclui os crachás selecionados, um a um, reportando o quanto deu
+  /// certo. Antes isso engole a exceção e a UI mentia "N excluídos" mesmo
+  /// com tudo falhado.
+  Future<BatchDeleteResult> deleteSelectedBadges() async {
+    final ids = Set<String>.from(_selectedBadgeIds);
+    if (ids.isEmpty) {
+      return const BatchDeleteResult(deleted: 0, failed: 0);
+    }
 
     _isLoading = true;
     notifyListeners();
 
-    try {
-      final ids = Set<String>.from(_selectedBadgeIds);
-      for (final id in ids) {
-        if (_cloudAvailable) {
-          final badge = _badges.where((b) => b.id == id).firstOrNull;
-          if (badge != null) {
-            await BadgeCloudService.deleteBadge(badge);
+    var deleted = 0;
+    var failed = 0;
+    var cloudPending = false;
+
+    for (final id in ids) {
+      final badge = _badges.where((b) => b.id == id).firstOrNull;
+      if (badge != null && _cloudAvailable) {
+        try {
+          await BadgeCloudService.deleteBadge(badge);
+          await RetryQueue.remove(id, type: PendingOpType.deleteBadge);
+        } catch (e) {
+          debugPrint('[BadgeManager] Lote: falha na nuvem em $id: $e');
+          cloudPending = true;
+          if (e is CloudUnavailableException) {
+            await RetryQueue.add(PendingOperation(
+              id: id,
+              type: PendingOpType.deleteBadge,
+              payload: const {},
+              createdAt: DateTime.now(),
+            ));
           }
         }
-        await BadgeStorageService.deleteBadge(id);
+      } else if (badge != null) {
+        // Sem nuvem: garante que a exclusão suba depois.
+        await RetryQueue.add(PendingOperation(
+          id: id,
+          type: PendingOpType.deleteBadge,
+          payload: const {},
+          createdAt: DateTime.now(),
+        ));
+        cloudPending = true;
       }
 
-      _badges = await BadgeStorageService.getBadgeList();
-
-      // Se o crachá atual foi excluído, atualiza o crachá atual
-      if (_selectedBadgeIds.contains(_currentBadge?.id)) {
-        _currentBadge = _badges.isNotEmpty ? _badges.first : BadgeData();
+      final localOk = await BadgeStorageService.deleteBadge(id);
+      if (localOk) {
+        deleted++;
+      } else {
+        failed++;
       }
-
-      _selectedBadgeIds.clear();
-    } catch (e) {
-      debugPrint('Erro ao excluir crachás em lote: $e');
-    } finally {
-      _isLoading = false;
-      notifyListeners();
     }
+
+    _pendingOps = RetryQueue.length;
+    if (cloudPending) _cloudAvailable = false;
+
+    _badges = await BadgeStorageService.getBadgeList();
+    _selectedBadgeIds.clear();
+
+    // Se o crachá atual foi excluído, aponta para outro.
+    if (ids.contains(_currentBadge?.id)) {
+      _currentBadge = _badges.isNotEmpty ? _badges.first : BadgeData();
+      _lastSavedPhoto = _currentBadge?.photo;
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return BatchDeleteResult(
+      deleted: deleted,
+      failed: failed,
+      cloudPending: cloudPending,
+    );
   }
 }

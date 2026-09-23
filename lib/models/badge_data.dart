@@ -37,6 +37,16 @@ class BadgeData {
   DateTime createdAt;
   DateTime updatedAt;
 
+  /// Path da foto no bucket privado. Vem do banco e precisa sobreviver ao
+  /// round-trip: numa galeria compartilhada o crachá pode ter sido criado
+  /// por outro usuário, e derivar o path do UID local apontaria para o
+  /// arquivo errado (e deixaria a foto real órfã no delete).
+  String? photoPath;
+
+  /// Quem criou o registro. Metadado de autoria, não controle de acesso:
+  /// as policies permitem ler e editar qualquer crachá entre autenticados.
+  String? ownerId;
+
   BadgeData({
     String? id,
     this.name = "",
@@ -45,6 +55,8 @@ class BadgeData {
     this.photo,
     DateTime? createdAt,
     DateTime? updatedAt,
+    this.photoPath,
+    this.ownerId,
   })  : id = id ?? _generateUuid(),
         createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
@@ -92,6 +104,8 @@ class BadgeData {
       'photo': photo != null ? base64Encode(photo!) : null,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'photoPath': photoPath,
+      'ownerId': ownerId,
     };
   }
 
@@ -104,6 +118,10 @@ class BadgeData {
       'photo': null,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      // Foto some do cache local por cota, mas o path continua: sem ele o
+      // próximo save em modo offline tentaria subir bytes que não tem.
+      'photoPath': photoPath,
+      'ownerId': ownerId,
     };
   }
 
@@ -118,6 +136,8 @@ class BadgeData {
       photo: map['photo'] != null ? base64Decode(map['photo']) : null,
       createdAt: DateTime.parse(map['createdAt']),
       updatedAt: DateTime.parse(map['updatedAt']),
+      photoPath: map['photoPath'] as String?,
+      ownerId: map['ownerId'] as String?,
     );
   }
 
@@ -125,20 +145,28 @@ class BadgeData {
     updatedAt = DateTime.now();
   }
 
+  /// Cópia com campos sobrescritos.
+  ///
+  /// [clearPhoto] existe porque `photo: null` é indistinguível de "não mexe
+  /// na foto" em Dart — sem o flag, remover a foto era um no-op silencioso
+  /// e o registro continuava apontando para o JPEG na nuvem.
   BadgeData copyWith({
     String? name,
     String? role,
     String? department,
     Uint8List? photo,
+    bool clearPhoto = false,
   }) {
     return BadgeData(
       id: id,
       name: name != null ? name.toUpperCase() : this.name,
       role: role != null ? role.toUpperCase() : this.role,
       department: department ?? this.department,
-      photo: photo ?? this.photo,
+      photo: clearPhoto ? null : (photo ?? this.photo),
       createdAt: createdAt,
       updatedAt: DateTime.now(),
+      photoPath: clearPhoto ? null : photoPath,
+      ownerId: ownerId,
     );
   }
 }

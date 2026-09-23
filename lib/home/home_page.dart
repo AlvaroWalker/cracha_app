@@ -71,12 +71,20 @@ class _HomeContent extends StatelessWidget {
       AppSnackbar.showError(context, errors.first.message);
       return;
     }
-    final ok = await bm.saveCurrentBadge();
+    final outcome = await bm.saveCurrentBadge();
     if (!context.mounted) return;
-    if (ok) {
-      AppSnackbar.showSuccess(context, 'Crachá salvo com sucesso!');
-    } else {
-      AppSnackbar.showError(context, 'Erro ao salvar o crachá.');
+    // Feedback honesto: "pendente" é dispositivo-only, não nuvem. Dizer
+    // "salvo" quando o dado só existe no cache local é inventar sucesso.
+    switch (outcome) {
+      case SaveOutcome.synced:
+        AppSnackbar.showSuccess(context, 'Crachá salvo com sucesso!');
+      case SaveOutcome.pendingSync:
+        AppSnackbar.showInfo(
+          context,
+          'Salvo neste dispositivo. Sincronizando quando a internet voltar.',
+        );
+      case SaveOutcome.failed:
+        AppSnackbar.showError(context, 'Erro ao salvar o crachá.');
     }
   }
 

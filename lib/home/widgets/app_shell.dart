@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/auth_service.dart';
@@ -10,7 +11,11 @@ import '../../utils/app_tokens.dart';
 /// - Desktop (>=1024px): Sidebar lateral customizada de 240px com header
 ///   institucional, itens de navegação em pílula, status da nuvem e perfil.
 /// - Mobile (<1024px): Dock inferior elegante com borda hairline e navegação limpa.
-class AppShell extends StatelessWidget {
+///
+/// Também instala os atalhos `Ctrl/Cmd + 1..5` que a sidebar anuncia no
+/// rodapé de cada item. Antes o atalho era decorativo: aparecia na tela e
+/// não fazia nada.
+class AppShell extends StatefulWidget {
   const AppShell({
     super.key,
     required this.child,
@@ -28,55 +33,99 @@ class AppShell extends StatelessWidget {
   final Widget? userAvatar;
   final void Function(String route)? onNavigate;
 
-  static const List<_NavItem> _navItems = [
-    _NavItem(
+  /// Itens de navegação do shell. Ordem = ordem do `IndexedStack` em
+  /// `_BootShell`, ou seja, a ordem aqui é contrato, não preferência.
+  static const List<NavItem> navItems = [
+    NavItem(
       route: 'emissor',
       label: 'Emissor',
       icon: Icons.badge_outlined,
       activeIcon: Icons.badge_rounded,
-      shortcut: '⌘1',
+      shortcutDigit: '1',
     ),
-    _NavItem(
+    NavItem(
       route: 'crachas',
       label: 'Crachás Salvos',
       icon: Icons.grid_view_outlined,
       activeIcon: Icons.grid_view_rounded,
-      shortcut: '⌘2',
+      shortcutDigit: '2',
     ),
-    _NavItem(
+    NavItem(
       route: 'tutorial',
       label: 'Tutorial',
       icon: Icons.help_outline_rounded,
       activeIcon: Icons.help_rounded,
-      shortcut: '⌘3',
+      shortcutDigit: '3',
     ),
-    _NavItem(
+    NavItem(
       route: 'tema',
       label: 'Aparência',
       icon: Icons.palette_outlined,
       activeIcon: Icons.palette_rounded,
-      shortcut: '⌘4',
+      shortcutDigit: '4',
     ),
-    _NavItem(
+    NavItem(
       route: 'conta',
       label: 'Conta & Sessão',
       icon: Icons.account_circle_outlined,
       activeIcon: Icons.account_circle_rounded,
-      shortcut: '⌘5',
+      shortcutDigit: '5',
     ),
   ];
 
+  static int get routeCount => navItems.length;
+
   static int indexFor(String route) {
     final lower = route.toLowerCase();
-    for (var i = 0; i < _navItems.length; i++) {
-      if (_navItems[i].route == lower) return i;
+    for (var i = 0; i < navItems.length; i++) {
+      if (navItems[i].route == lower) return i;
     }
     return 0;
   }
 
+  static String routeForIndex(int index) =>
+      (index >= 0 && index < navItems.length)
+          ? navItems[index].route
+          : navItems.first.route;
+
+  @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  // True quando o atalho ⌘/Ctrl está pressionado: troca o rótulo de '⌘1'
+  // para 'Ctrl+1' em teclado Windows/Linux.
+  bool _ctrlPressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Eventos de tecla crua capturam Ctrl/Cmd mesmo quando um TextField
+    // tem foco — Shortcuts não disparariam enquanto o usuário digita num
+    // campo de busca, e aí o atalho seria inútil.
+    HardwareKeyboard.instance.addHandler(_onKeyEvent);
+  }
+
+  @override
+  void dispose() {
+    HardwareKeyboard.instance.removeHandler(_onKeyEvent);
+    super.dispose();
+  }
+
+  bool _onKeyEvent(KeyEvent event) {
+    if (event is KeyDownEvent || event is KeyRepeatEvent) {
+      final isModifier = HardwareKeyboard.instance.isControlPressed ||
+          HardwareKeyboard.instance.isMetaPressed;
+      if (isModifier != _ctrlPressed) {
+        setState(() => _ctrlPressed = isModifier);
+      }
+    }
+    return false; // não consome: outros handlers ainda veem o evento.
+  }
+
   void _go(BuildContext context, int index) {
     FocusScope.of(context).unfocus();
-    onNavigate?.call(_navItems[index].route);
+    widget.onNavigate?.call(AppShell.routeForIndex(index));
   }
 
   @override
@@ -87,48 +136,77 @@ class AppShell extends StatelessWidget {
   }
 
   Widget _buildDesktop(BuildContext context) {
-    final index = indexFor(currentRoute);
+    final index = AppShell.indexFor(widget.currentRoute);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: Row(
-        children: [
-          // ── Sidebar Linear / Vercel (240px) ─────────────────────────
-          _DesktopSidebar(
-            currentIndex: index,
-            navItems: _navItems,
-            onSelect: (i) => _go(context, i),
+    return Shortcuts(
+      // Ctrl/Cmd + 1..5 troca de aba. Mapear por LogicalKeySet e não por
+      // caractere para pegar Ctrl+1 e Cmd+1 com o mesmo atalho. Sem `const`
+      // porque o map é gerado por um for sobre os dígitos.
+      shortcuts: {
+        for (var i = 0; i < AppShell.routeCount; i++) ...{
+          LogicalKeySet(LogicalKeyboardKey.control, _digitKeys[i]):
+              _NavigateIntent(i),
+          LogicalKeySet(LogicalKeyboardKey.meta, _digitKeys[i]):
+              _NavigateIntent(i),
+        },
+      },
+      child: Actions(
+        actions: {
+          _NavigateIntent: CallbackAction<_NavigateIntent>(
+            onInvoke: (intent) {
+              if (intent.index >= 0 && intent.index < AppShell.routeCount) {
+                _go(context, intent.index);
+              }
+              return null;
+            },
           ),
-
-          // ── Separador Vertical Hairline ─────────────────────────────
-          Container(
-            width: 1,
-            color: isDark ? AppColors.borderDark : AppColors.borderLight,
-          ),
-
-          // ── Conteúdo Principal + TopBar ─────────────────────────────
-          Expanded(
-            child: Column(
+        },
+        child: Focus(
+          autofocus: true,
+          child: Scaffold(
+            backgroundColor: theme.scaffoldBackgroundColor,
+            body: Row(
               children: [
-                _TopBar(
-                  routeLabel: _navItems[index].label,
-                  search: search,
-                  actions: actions,
-                  userAvatar: userAvatar,
+                // ── Sidebar Linear / Vercel (240px) ─────────────────────────
+                _DesktopSidebar(
+                  currentIndex: index,
+                  navItems: AppShell.navItems,
+                  onSelect: (i) => _go(context, i),
+                  useCtrlLabel: _ctrlPressed,
                 ),
-                Expanded(child: child),
+
+                // ── Separador Vertical Hairline ─────────────────────────────
+                Container(
+                  width: 1,
+                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                ),
+
+                // ── Conteúdo Principal + TopBar ─────────────────────────────
+                Expanded(
+                  child: Column(
+                    children: [
+                      _TopBar(
+                        routeLabel: AppShell.navItems[index].label,
+                        search: widget.search,
+                        actions: widget.actions,
+                        userAvatar: widget.userAvatar,
+                      ),
+                      Expanded(child: widget.child),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildMobile(BuildContext context) {
-    final index = indexFor(currentRoute);
+    final index = AppShell.indexFor(widget.currentRoute);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final brand = isDark ? AppColors.brandDark : AppColors.brandLight;
@@ -148,7 +226,7 @@ class AppShell extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Text(
-              _navItems[index].label,
+              AppShell.navItems[index].label,
               style: TextStyle(
                 fontFamily: 'Rawline',
                 fontSize: 16,
@@ -159,17 +237,17 @@ class AppShell extends StatelessWidget {
           ],
         ),
         actions: [
-          if (actions != null) ...actions!,
-          if (userAvatar != null) ...[
+          if (widget.actions != null) ...widget.actions!,
+          if (widget.userAvatar != null) ...[
             const SizedBox(width: 4),
             Padding(
               padding: const EdgeInsets.only(right: 12),
-              child: Center(child: userAvatar!),
+              child: Center(child: widget.userAvatar!),
             ),
           ],
         ],
       ),
-      body: SafeArea(child: child),
+      body: SafeArea(child: widget.child),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: isDark ? AppColors.surfaceDark : Colors.white,
@@ -185,10 +263,10 @@ class AppShell extends StatelessWidget {
             height: 60,
             child: Row(
               children: [
-                for (var i = 0; i < _navItems.length; i++) ...[
+                for (var i = 0; i < AppShell.navItems.length; i++) ...[
                   Expanded(
                     child: _MobileNavItem(
-                      item: _navItems[i],
+                      item: AppShell.navItems[i],
                       isSelected: i == index,
                       onTap: () => _go(context, i),
                       brandColor: brand,
@@ -205,19 +283,37 @@ class AppShell extends StatelessWidget {
   }
 }
 
+/// Intenção de navegação por atalho (Ctrl/Cmd + 1..5).
+class _NavigateIntent extends Intent {
+  const _NavigateIntent(this.index);
+  final int index;
+}
+
+const List<LogicalKeyboardKey> _digitKeys = [
+  LogicalKeyboardKey.digit1,
+  LogicalKeyboardKey.digit2,
+  LogicalKeyboardKey.digit3,
+  LogicalKeyboardKey.digit4,
+  LogicalKeyboardKey.digit5,
+];
+
 // ============================================================================
 // Sidebar Desktop (Linear-like 240px)
 // ============================================================================
 
 class _DesktopSidebar extends StatelessWidget {
   final int currentIndex;
-  final List<_NavItem> navItems;
+  final List<NavItem> navItems;
   final ValueChanged<int> onSelect;
+
+  /// Rótulo do atalho usa 'Ctrl+N' quando o modificador está pressionado.
+  final bool useCtrlLabel;
 
   const _DesktopSidebar({
     required this.currentIndex,
     required this.navItems,
     required this.onSelect,
+    this.useCtrlLabel = false,
   });
 
   @override
@@ -361,6 +457,7 @@ class _DesktopSidebar extends StatelessWidget {
                   isSelected: isSelected,
                   badgeCount: badgeCount,
                   onTap: () => onSelect(i),
+                  useCtrlLabel: useCtrlLabel,
                 );
               },
             ),
@@ -499,16 +596,18 @@ class _DesktopSidebar extends StatelessWidget {
 // ── Botão de Item da Sidebar ────────────────────────────────────────────────
 
 class _SidebarItem extends StatelessWidget {
-  final _NavItem item;
+  final NavItem item;
   final bool isSelected;
   final int? badgeCount;
   final VoidCallback onTap;
+  final bool useCtrlLabel;
 
   const _SidebarItem({
     required this.item,
     required this.isSelected,
     this.badgeCount,
     required this.onTap,
+    this.useCtrlLabel = false,
   });
 
   @override
@@ -575,9 +674,9 @@ class _SidebarItem extends StatelessWidget {
                     ),
                   ),
                 ),
-              ] else if (item.shortcut != null && !isSelected) ...[
+              ] else if (item.shortcutDigit != null && !isSelected) ...[
                 Text(
-                  item.shortcut!,
+                  item.shortcutLabel(useCtrl: useCtrlLabel),
                   style: TextStyle(
                     fontFamily: 'Rawline',
                     fontSize: 10.5,
@@ -596,7 +695,7 @@ class _SidebarItem extends StatelessWidget {
 // ── Item de Navegação Mobile ────────────────────────────────────────────────
 
 class _MobileNavItem extends StatelessWidget {
-  final _NavItem item;
+  final NavItem item;
   final bool isSelected;
   final VoidCallback onTap;
   final Color brandColor;
@@ -738,18 +837,26 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class _NavItem {
-  const _NavItem({
+/// Um item de navegação do shell. Público porque [AppShell.navItems] é
+/// usado de fora (atalhos, testes) e tipo privado em API pública é lint.
+class NavItem {
+  const NavItem({
     required this.route,
     required this.label,
     required this.icon,
     required this.activeIcon,
-    this.shortcut,
+    this.shortcutDigit,
   });
 
   final String route;
   final String label;
   final IconData icon;
   final IconData activeIcon;
-  final String? shortcut;
+
+  /// Dígito do atalho (1..5). Rótulo é montado em runtime porque o
+  /// modificador depende da plataforma: '⌘2' no Mac, 'Ctrl+2' no Windows.
+  final String? shortcutDigit;
+
+  String shortcutLabel({required bool useCtrl}) =>
+      useCtrl ? 'Ctrl+$shortcutDigit' : '⌘$shortcutDigit';
 }

@@ -205,9 +205,18 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
     );
 
     if (confirm == true && mounted) {
-      await context.read<BadgeManager>().deleteSelectedBadges();
-      if (mounted) {
-        AppSnackbar.showSuccess(context, '$count crachás excluídos.');
+      final result = await context.read<BadgeManager>().deleteSelectedBadges();
+      if (!mounted) return;
+      // A contagem real vem do resultado — antes a UI imprimia o que o
+      // usuário pediu para excluir, não o que de fato saiu.
+      if (result.deleted == 0) {
+        AppSnackbar.showError(context, 'Nenhum crachá foi excluído.');
+      } else if (result.failed == 0 && !result.cloudPending) {
+        AppSnackbar.showSuccess(context, result.message);
+      } else if (result.failed > 0) {
+        AppSnackbar.showError(context, result.message);
+      } else {
+        AppSnackbar.showInfo(context, result.message);
       }
     }
   }
