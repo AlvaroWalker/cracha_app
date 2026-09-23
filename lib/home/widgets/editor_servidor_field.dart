@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/badge_data.dart';
+import '../../models/department.dart';
 import '../../services/badge_form_controller.dart';
 import '../../services/badge_manager.dart';
 import '../../utils/app_tokens.dart';
@@ -55,7 +56,9 @@ class EditorServidorField extends StatelessWidget {
                 m.updateCurrentBadge(
                   name: s.nome,
                   role: s.cargo,
-                  department: s.secretaria,
+                  // O cadastro de servidores vem sem o prefixo do órgão —
+                  // o crachá sempre começa com "SECRETARIA MUNICIPAL".
+                  department: Department.canonical(s.secretaria),
                 );
                 form.setFieldsFromBadge(m.currentBadge ?? BadgeData());
               },

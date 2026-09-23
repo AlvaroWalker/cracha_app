@@ -91,27 +91,6 @@ class AccountPage extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 2),
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.success.withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                                    ),
-                                    child: const Text(
-                                      'OPERADOR RH OFICIAL',
-                                      style: TextStyle(
-                                        fontFamily: 'Rawline',
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w800,
-                                        color: AppColors.success,
-                                        letterSpacing: 0.3,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
                             ],
                           ),
                         ),

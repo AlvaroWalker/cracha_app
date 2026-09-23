@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/badge_data.dart';
+import '../models/department.dart';
 import 'badge_manager.dart';
 import 'servidor_repository.dart';
 
@@ -108,12 +109,15 @@ class BadgeFormController extends ChangeNotifier {
   void applyServidor(Servidor s) {
     final m = _manager;
     if (m == null) return;
+    // Secretaria canônica sempre com o prefixo do órgão: o cadastro de
+    // servidores vem abreviado (ex: "ADMINISTRACAO E RECURSOS HUMANOS").
+    final dept = Department.canonical(s.secretaria);
     m.updateCurrentBadge(
       name: s.nome,
       role: s.cargo,
-      department: s.secretaria,
+      department: dept,
     );
-    setFieldsFromBadge(BadgeData(name: s.nome, role: s.cargo, department: s.secretaria));
+    setFieldsFromBadge(BadgeData(name: s.nome, role: s.cargo, department: dept));
   }
 
   void clear() {

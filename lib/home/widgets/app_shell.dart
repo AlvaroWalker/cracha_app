@@ -558,14 +558,6 @@ class _DesktopSidebar extends StatelessWidget {
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
-                            Text(
-                              'Servidor RH',
-                              style: TextStyle(
-                                fontFamily: 'Rawline',
-                                fontSize: 10,
-                                color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
-                              ),
-                            ),
                           ],
                         ),
                       ),
