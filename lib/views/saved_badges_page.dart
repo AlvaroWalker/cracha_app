@@ -9,7 +9,7 @@ import '../services/badge_manager.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_snackbar.dart';
 import '../utils/app_tokens.dart';
-import '../utils/multi_badge_pdf_generator.dart';
+import '../utils/multi_badge_image_pdf_generator.dart';
 import 'app_button.dart';
 import 'badge_view.dart';
 import 'saved_badges_empty_state.dart';
@@ -250,6 +250,17 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
     final selectedIds = bm.selectedBadgeIds;
     final hasSelection = selectedIds.isNotEmpty;
 
+    // Quantos dos ATUALMENTE VISÍVEIS já estão selecionados.
+    //
+    // `selectedIds` ACUMULA entre filtros (de propósito: permite montar um
+    // lote atravessando vários). Comparar `selectedIds.length` com
+    // `filteredBadges.length` misturava as duas contagens: com 5 marcados
+    // de um filtro e 3 visíveis de outro, 5 < 3 é falso e o botão sumia
+    // — mas nenhum dos 3 visíveis estava marcado, ou seja, o usuário
+    // ficava sem como marcá-los de uma vez.
+    final visiveisJaSelecionados =
+        filteredBadges.where((b) => selectedIds.contains(b.id)).length;
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
@@ -454,7 +465,7 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                       ),
                     ),
                     if (filteredBadges.isNotEmpty &&
-                        selectedIds.length < filteredBadges.length) ...[
+                        visiveisJaSelecionados < filteredBadges.length) ...[
                       const SizedBox(width: 8),
                       AppButton.secondary(
                         // "N visíveis" deixa explícito o que será marcado —
@@ -602,7 +613,14 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                     size: AppButtonSize.sm,
                     onPressed: () {
                       final selectedList = bm.selectedBadges;
-                      MultiBadgePdfGenerator.generateMultipleBadgesPdf(
+                      // Imagem 300 DPI, não vetorial: o `dart_pdf` e o Skia
+                      // discordam a caixa da fonte em 37.6% (hhea vs OS/2
+                      // typo), o que fazia o texto quebrar em silêncio —
+                      // palavra órfã, secretaria inteira descartada. Montando
+                      // o BadgeView e capturando, quem decide o layout é o
+                      // Skia, o mesmo do preview. Ver
+                      // multi_badge_image_pdf_generator.dart.
+                      MultiBadgeImagePdfGenerator.generateMultipleBadgesPdf(
                           selectedList, context);
                     },
                   ),

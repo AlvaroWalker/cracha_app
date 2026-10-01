@@ -6,7 +6,7 @@ import '../../models/badge_data.dart';
 import '../../services/badge_manager.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_tokens.dart';
-import '../../utils/pdf_vector_generator.dart';
+import '../../utils/pdf_generator.dart';
 import '../../views/badge_design.dart';
 
 /// Pré-visualização do crachá (Linear-like).
@@ -292,7 +292,24 @@ class _PdfButton extends StatelessWidget {
   const _PdfButton({required this.globalKey, required this.badge});
 
   Future<void> _downloadPdf(BuildContext context) {
-    return PdfVectorGenerator.generateAndSharePdf(
+    // Exporta como IMAGEM a 300 DPI, não vetorial.
+    //
+    // Por que imagem: o `dart_pdf` e o Skia leem tabelas diferentes do mesmo
+    // TTF (caixa 1.3765 vs 1.0 — 37.6% de diferença, medido), então o PDF
+    // vetorial quebrava o texto de formas silenciosas: palavra órfã,
+    // `TextOverflow.clip` comendo linha, `pw.Column` descartando a
+    // secretaria inteira. Nenhum número mágico corrige uma divergência
+    // entre duas engines de medição.
+    //
+    // Capturando o widget já montado, quem decide o layout é o próprio
+    // Skia — o mesmo do preview. A imagem entra no PDF sem qualquer
+    // medição, então os dois lados não podem divergir.
+    //
+    // Resolução: 54×85mm a 300 DPI = 638×1004px, mais que suficiente para
+    // impressão. O que se perde é texto selecionável — irrelevante num
+    // crachá que vai para a impressora.
+    return PdfGenerator.generateAndSharePdf(
+      globalKey,
       context,
       badgeData: badge,
     );
