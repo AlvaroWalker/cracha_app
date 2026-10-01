@@ -30,19 +30,7 @@ class BadgeStorageService {
 
       // Salvar lista atualizada. Se estourar a cota do localStorage,
       // tenta descartar as fotos (mantém os dados) antes de desistir.
-      bool saved;
-      try {
-        final badgeJsonList =
-            badgeList.map((b) => jsonEncode(b.toMap())).toList();
-        saved = await prefs.setStringList(_badgeListKey, badgeJsonList);
-        if (!saved) throw Exception('setStringList retornou false');
-      } catch (_) {
-        // Cota excedida: salva sem as fotos (dados preservados)
-        final badgeSemFoto =
-            badgeList.map((b) => jsonEncode(b.toMapSemFoto())).toList();
-        saved = await prefs.setStringList(_badgeListKey, badgeSemFoto);
-      }
-      return saved;
+      return await _writeBadges(prefs, badgeList);
     } catch (e) {
       debugPrint('Erro ao salvar crachá: $e');
       return false;
@@ -55,14 +43,49 @@ class BadgeStorageService {
       final prefs = await SharedPreferences.getInstance();
       final badgeJsonList = prefs.getStringList(_badgeListKey) ?? [];
 
-      return badgeJsonList
+      final badges = badgeJsonList
           .map((json) => BadgeData.fromMap(jsonDecode(json)))
           .toList()
         // Ordenar por data de atualização (mais recentes primeiro)
         ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+
+      // A migração do nome acontece na desserialização. Persiste o cache
+      // também, para que uma próxima execução offline não releia o legado.
+      final canonicalJsonList =
+          badges.map((badge) => jsonEncode(badge.toMap())).toList();
+      if (!_sameJsonList(badgeJsonList, canonicalJsonList)) {
+        await _writeBadges(prefs, badges);
+      }
+      return badges;
     } catch (e) {
       debugPrint('Erro ao obter lista de crachás: $e');
       return [];
+    }
+  }
+
+  static bool _sameJsonList(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  static Future<bool> _writeBadges(
+      SharedPreferences prefs, List<BadgeData> badges) async {
+    try {
+      final badgeJsonList = badges.map((b) => jsonEncode(b.toMap())).toList();
+      if (await prefs.setStringList(_badgeListKey, badgeJsonList)) return true;
+    } catch (_) {
+      // Cota excedida: salva sem as fotos (dados preservados).
+    }
+    try {
+      final badgeSemFoto =
+          badges.map((b) => jsonEncode(b.toMapSemFoto())).toList();
+      return await prefs.setStringList(_badgeListKey, badgeSemFoto);
+    } catch (e) {
+      debugPrint('Erro ao salvar lista de crachás: $e');
+      return false;
     }
   }
 
@@ -77,7 +100,8 @@ class BadgeStorageService {
         return true;
       } catch (_) {
         // Cota excedida: salva sem fotos (dados preservados)
-        final badgeSemFoto = badges.map((b) => jsonEncode(b.toMapSemFoto())).toList();
+        final badgeSemFoto =
+            badges.map((b) => jsonEncode(b.toMapSemFoto())).toList();
         await prefs.setStringList(_badgeListKey, badgeSemFoto);
         return true;
       }

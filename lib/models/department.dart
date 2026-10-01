@@ -1,4 +1,7 @@
 class Department {
+  static const String securityDepartment =
+      'SECRETARIA MUNICIPAL INTEGRADA DE APOIO À SEGURANÇA PÚBLICA';
+
   static final List<String> departments = [
     "SECRETARIA MUNICIPAL DE ADMINISTRAÇÃO E RECURSOS HUMANOS",
     "SECRETARIA MUNICIPAL DE AGRICULTURA E MEIO AMBIENTE",
@@ -14,8 +17,23 @@ class Department {
     "SECRETARIA MUNICIPAL DE OBRAS E VIAÇÃO",
     "SECRETARIA MUNICIPAL DE PLANEJAMENTO",
     "SECRETARIA MUNICIPAL DE SAÚDE",
-    "SECRETARIA MUNICIPAL INTEGRADA DE APOIO À SEGURANÇA",
+    securityDepartment,
   ];
+
+  /// Migra somente grafias legadas conhecidas. O valor atual é devolvido
+  /// sem alteração para que uma secretaria desconhecida não seja corrompida.
+  static String migrateLegacyName(String raw) {
+    final t = raw.trim().toUpperCase();
+    if (t == 'SECRETARIA MUNICIPAL INTEGRADA DE APOIO À SEGURANÇA' ||
+        t == 'SECRETARIA MUNICIPAL INTEGRADA DE APOIO A SEGURANCA PUBLICA' ||
+        t == 'INTEGRADA DE APOIO A SEGURANCA PUBLICA' ||
+        t == 'INTEGRADA DE APOIO À SEGURANÇA PÚBLICA' ||
+        t == 'APOIO À SEGURANÇA PÚBLICA' ||
+        t == 'APOIO A SEGURANCA PUBLICA') {
+      return securityDepartment;
+    }
+    return raw;
+  }
 
   /// Converte a secretaria vinda do cadastro de servidores (CSV/Supabase,
   /// ex: "ADMINISTRACAO E RECURSOS HUMANOS") para a forma canônica do crachá
@@ -25,7 +43,7 @@ class Department {
   /// não carrega o órgão completo, e o crachá precisa. Se já estiver com o
   /// prefixo ou não casar com nada conhecido, devolve como veio.
   static String canonical(String raw) {
-    final t = raw.trim().toUpperCase();
+    final t = migrateLegacyName(raw).trim().toUpperCase();
     if (t.isEmpty) return t;
     if (t.startsWith('SECRETARIA MUNICIPAL')) return t;
     // Forma curta do cadastro -> forma completa do crachá.
@@ -45,10 +63,17 @@ class Department {
 
   /// Remove acentos para comparar "SAUDE" com "SAÚDE".
   static String _plain(String s) => s
-      .replaceAll('Á', 'A').replaceAll('À', 'A').replaceAll('Ã', 'A').replaceAll('Â', 'A')
-      .replaceAll('É', 'E').replaceAll('Ê', 'E')
+      .replaceAll('Á', 'A')
+      .replaceAll('À', 'A')
+      .replaceAll('Ã', 'A')
+      .replaceAll('Â', 'A')
+      .replaceAll('É', 'E')
+      .replaceAll('Ê', 'E')
       .replaceAll('Í', 'I')
-      .replaceAll('Ó', 'O').replaceAll('Ô', 'O').replaceAll('Õ', 'O')
-      .replaceAll('Ú', 'U').replaceAll('Ü', 'U')
+      .replaceAll('Ó', 'O')
+      .replaceAll('Ô', 'O')
+      .replaceAll('Õ', 'O')
+      .replaceAll('Ú', 'U')
+      .replaceAll('Ü', 'U')
       .replaceAll('Ç', 'C');
 }

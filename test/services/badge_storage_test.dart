@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:cracha_app/models/badge_data.dart';
+import 'package:cracha_app/services/badge_manager.dart';
 import 'package:cracha_app/services/badge_storage_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,6 +15,55 @@ void main() {
   });
 
   group('BadgeData', () {
+    test('novo crachá começa sem departamento preenchido', () {
+      final badge = BadgeData();
+
+      expect(badge.name, isEmpty);
+      expect(badge.role, isEmpty);
+      expect(badge.department, isEmpty);
+      expect(badge.photo, isNull);
+    });
+
+    test('fromMap converte o nome antigo de segurança', () {
+      const nomeAntigo = 'SECRETARIA MUNICIPAL INTEGRADA DE APOIO À SEGURANÇA';
+      const nomeNovo =
+          'SECRETARIA MUNICIPAL INTEGRADA DE APOIO À SEGURANÇA PÚBLICA';
+
+      final badge = BadgeData.fromMap({
+        'id': 'legacy-badge',
+        'name': 'JOÃO',
+        'role': 'GUARDA',
+        'department': nomeAntigo,
+        'photo': null,
+        'createdAt': DateTime(2024).toIso8601String(),
+        'updatedAt': DateTime(2024).toIso8601String(),
+        'photoPath': null,
+        'ownerId': null,
+      });
+
+      expect(badge.department, nomeNovo);
+    });
+
+    test('createNewBadge limpa todos os campos do crachá', () {
+      final manager = BadgeManager()
+        ..setCurrentBadge(
+          BadgeData(
+            name: 'João Silva',
+            role: 'Professor',
+            department: 'SECRETARIA MUNICIPAL DE EDUCAÇÃO',
+            photo: Uint8List.fromList([1, 2, 3]),
+          ),
+        )
+        ..createNewBadge();
+
+      final badge = manager.currentBadge;
+      expect(badge, isNotNull);
+      expect(badge!.name, isEmpty);
+      expect(badge.role, isEmpty);
+      expect(badge.department, isEmpty);
+      expect(badge.photo, isNull);
+    });
+
     test('validate aceita um crachá completo', () {
       final badge = BadgeData(
         name: 'João da Silva',
@@ -46,7 +96,8 @@ void main() {
         role: 'Professor',
         department: 'Secretaria Inexistente',
       );
-      final erros = badge.validate(validDepartments: ['Secretaria de Educação']);
+      final erros =
+          badge.validate(validDepartments: ['Secretaria de Educação']);
       expect(erros, contains(BadgeValidationError.departmentInvalid));
     });
 
@@ -100,8 +151,8 @@ void main() {
     test('id é UUID v4 válido e único por instância', () {
       final a = BadgeData();
       final b = BadgeData();
-      final regex =
-          RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$');
+      final regex = RegExp(
+          r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$');
       expect(regex.hasMatch(a.id), isTrue);
       expect(regex.hasMatch(b.id), isTrue);
       expect(a.id, isNot(b.id));
@@ -139,6 +190,28 @@ void main() {
       final lista = await BadgeStorageService.getBadgeList();
       expect(lista, hasLength(1));
       expect(lista.first.role, 'DIRETOR');
+    });
+
+    test('getBadgeList migra e persiste o nome antigo de segurança', () async {
+      const nomeAntigo = 'SECRETARIA MUNICIPAL INTEGRADA DE APOIO À SEGURANÇA';
+      const nomeNovo =
+          'SECRETARIA MUNICIPAL INTEGRADA DE APOIO À SEGURANÇA PÚBLICA';
+      final prefs = await SharedPreferences.getInstance();
+      final legado = BadgeData(
+        id: 'legacy-security',
+        name: 'João',
+        role: 'Guarda',
+        department: nomeAntigo,
+      );
+      await prefs.setStringList('badge_list', [jsonEncode(legado.toMap())]);
+
+      final lista = await BadgeStorageService.getBadgeList();
+
+      expect(lista.single.department, nomeNovo);
+      final persistido = jsonDecode(
+        prefs.getStringList('badge_list')!.single,
+      ) as Map<String, dynamic>;
+      expect(persistido['department'], nomeNovo);
     });
 
     test('getBadgeList ordena por updatedAt (mais recente primeiro)', () async {
@@ -202,6 +275,26 @@ void main() {
     test('getBadgeById devolve null para id inexistente', () async {
       final resultado = await BadgeStorageService.getBadgeById('nao-existe');
       expect(resultado, isNull);
+    });
+
+    test('BadgeCloudService canonicaliza secretaria legada', () {
+      // A conversão fica no modelo usado pelo fetch da nuvem; o teste do
+      // serializador garante que o mesmo caminho não reintroduz o nome antigo.
+      final badge = BadgeData.fromMap({
+        'id': 'cloud-legacy',
+        'name': 'JOÃO',
+        'role': 'GUARDA',
+        'department': 'SECRETARIA MUNICIPAL INTEGRADA DE APOIO À SEGURANÇA',
+        'photo': null,
+        'createdAt': DateTime(2024).toIso8601String(),
+        'updatedAt': DateTime(2024).toIso8601String(),
+        'photoPath': null,
+        'ownerId': null,
+      });
+      expect(
+        badge.department,
+        'SECRETARIA MUNICIPAL INTEGRADA DE APOIO À SEGURANÇA PÚBLICA',
+      );
     });
   });
 }

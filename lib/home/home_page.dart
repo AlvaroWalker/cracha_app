@@ -34,6 +34,10 @@ class _HomePageState extends State<HomePage> {
     // Liga o form ao BadgeManager IMEDIATAMENTE para que os listeners
     // já estejam ativos quando os TextFields forem construídos.
     final bm = Provider.of<BadgeManager>(context, listen: false);
+    // Cada nova HomePage representa uma nova sessão de edição. Mesmo que o
+    // manager tenha recebido dados antes (reabertura/login), o formulário
+    // nasce como um crachá novo.
+    bm.createNewBadge();
     _form.attach(bm);
     // Inicializa crachás (async, não bloqueia).
     WidgetsBinding.instance.addPostFrameCallback((_) {

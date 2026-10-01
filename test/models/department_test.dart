@@ -3,6 +3,23 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Department.canonical', () {
+    test('renomeia a secretaria de segurança para o nome oficial', () {
+      const novoNome =
+          'SECRETARIA MUNICIPAL INTEGRADA DE APOIO À SEGURANÇA PÚBLICA';
+
+      expect(Department.departments, contains(novoNome));
+      expect(
+        Department.canonical(
+          'SECRETARIA MUNICIPAL INTEGRADA DE APOIO À SEGURANÇA',
+        ),
+        novoNome,
+      );
+      expect(
+        Department.canonical('INTEGRADA DE APOIO A SEGURANCA PUBLICA'),
+        novoNome,
+      );
+    });
+
     test('devolve inalterado quando já começa com SECRETARIA MUNICIPAL', () {
       expect(
         Department.canonical('SECRETARIA MUNICIPAL DE EDUCAÇÃO'),

@@ -45,7 +45,8 @@ class BadgeManager extends ChangeNotifier {
   List<BadgeData> _badges = [];
   BadgeData? _currentBadge;
   bool _isLoading = false;
-  Set<String> _selectedBadgeIds = {}; // IDs dos crachás selecionados
+  // Final desde que `selectAllBadges` passou a acumular em vez de reatribuir.
+  final Set<String> _selectedBadgeIds = {}; // IDs dos crachás selecionados
 
   // Getters
   List<BadgeData> get badges => _badges;
@@ -87,8 +88,10 @@ class BadgeManager extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Garantir que sempre teremos um currentBadge válido
-      _currentBadge = BadgeData(); // Inicializa com um valor padrão
+      // Uma sessão nova sempre começa com um crachá em branco. Se já houver
+      // uma edição em andamento (por exemplo, um refresh da galeria), ela
+      // não deve ser sobrescrita pelo carregamento da lista.
+      _currentBadge ??= BadgeData();
 
       // Tenta buscar da nuvem (Supabase)
       try {
@@ -104,12 +107,10 @@ class BadgeManager extends ChangeNotifier {
         _badges = await BadgeStorageService.getBadgeList();
       }
 
-      // Se houver crachás na lista, define o mais recente como atual
-      if (_badges.isNotEmpty) {
-        _currentBadge = _badges.first;
-      }
+      // A lista carregada pertence à galeria. O emissor não seleciona nenhum
+      // registro automaticamente: os dados só entram por ação explícita de
+      // edição ou duplicação.
       _lastSavedPhoto = _currentBadge?.photo;
-      // Se a lista estiver vazia, mantém o BadgeData() que já foi criado
     } catch (e) {
       debugPrint('Erro ao inicializar crachás: $e');
       _currentBadge = BadgeData(); // Mantém o fallback
@@ -122,6 +123,14 @@ class BadgeManager extends ChangeNotifier {
   /// Esvazia a fila de operações pendentes chamando a nuvem.
   /// Best-effort: falha mantém a fila intacta para a próxima tentativa.
   Future<void> _drainRetryQueue() async {
+    // Carrega a fila persistida ANTES de ler `isEmpty`/`ofType`.
+    //
+    // `RetryQueue.add`/`remove` chamam `init()` sozinhos, mas a leitura é
+    // síncrona e não carrega nada. Sem esta linha, `_queue` nasce vazia no
+    // boot, o drain retorna cedo e as operações da sessão anterior nunca
+    // sobem: o usuário vê "salvo neste dispositivo" e o dado fica preso no
+    // local indefinidamente.
+    await RetryQueue.init();
     if (RetryQueue.isEmpty) {
       _pendingOps = 0;
       return;
@@ -151,7 +160,8 @@ class BadgeManager extends ChangeNotifier {
         debugPrint('[BadgeManager] Retry falhou para ${op.id}: $e');
         final exhausted = await RetryQueue.markAttempt(op.id);
         if (exhausted) {
-          debugPrint('[BadgeManager]_operation ${op.id} descartada após 3 tentativas.');
+          debugPrint(
+              '[BadgeManager]_operation ${op.id} descartada após 3 tentativas.');
         }
         // Para de tentar este lote: a rede ainda está ruim.
         break;
@@ -221,7 +231,7 @@ class BadgeManager extends ChangeNotifier {
       _currentBadge = BadgeData(
         name: upperName ?? "",
         role: upperRole ?? "",
-        department: department ?? "SECRETARIA MUNICIPAL DE EDUCAÇÃO",
+        department: department ?? "",
         photo: photo,
       );
     } else {
@@ -269,7 +279,8 @@ class BadgeManager extends ChangeNotifier {
 
     if (_cloudAvailable) {
       try {
-        await BadgeCloudService.saveBadge(badge, skipPhotoUpload: photoUnchanged);
+        await BadgeCloudService.saveBadge(badge,
+            skipPhotoUpload: photoUnchanged);
         _lastSavedPhoto = badge.photo;
         await RetryQueue.remove(badge.id, type: PendingOpType.saveBadge);
       } catch (e) {
@@ -387,8 +398,19 @@ class BadgeManager extends ChangeNotifier {
     return _selectedBadgeIds.contains(badgeId);
   }
 
-  void selectAllBadges() {
-    _selectedBadgeIds = _badges.map((badge) => badge.id).toSet();
+  /// Seleciona os crachás atualmente visíveis na lista.
+  ///
+  /// [visibleBadges] é a lista JÁ filtrada pela tela. Sem este parâmetro o
+  /// método seleciona a coleção inteira: com um filtro de secretaria ativo,
+  /// "Selecionar Todos" marcava os 17 crachás enquanto a tela mostrava 3 —
+  /// e a exclusão em lote apagava exatamente o que o usuário não via.
+  ///
+  /// Selecionar não desmarca: trocas de filtro preservam a seleção anterior,
+  /// permitindo montar um lote atravessando vários filtros.
+  void selectAllBadges(List<BadgeData> visibleBadges) {
+    // Acumula, não substitui: trocar de filtro preserva a seleção anterior,
+    // permitindo montar um lote atravessando vários filtros.
+    _selectedBadgeIds.addAll(visibleBadges.map((badge) => badge.id));
     notifyListeners();
   }
 

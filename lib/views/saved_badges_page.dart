@@ -116,7 +116,8 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg)),
         title: Row(
           children: [
             Container(
@@ -125,10 +126,13 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                 color: AppColors.errorColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.delete_outline_rounded, color: AppColors.errorColor, size: 22),
+              child: const Icon(Icons.delete_outline_rounded,
+                  color: AppColors.errorColor, size: 22),
             ),
             const SizedBox(width: 12),
-            const Text('Excluir Crachá?', style: TextStyle(fontFamily: 'Rawline', fontWeight: FontWeight.w800)),
+            const Text('Excluir Crachá?',
+                style: TextStyle(
+                    fontFamily: 'Rawline', fontWeight: FontWeight.w800)),
           ],
         ),
         content: Text(
@@ -172,7 +176,8 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg)),
         title: Row(
           children: [
             Container(
@@ -181,15 +186,19 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                 color: AppColors.errorColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.delete_sweep_rounded, color: AppColors.errorColor, size: 22),
+              child: const Icon(Icons.delete_sweep_rounded,
+                  color: AppColors.errorColor, size: 22),
             ),
             const SizedBox(width: 12),
-            const Text('Exclusão em Lote', style: TextStyle(fontFamily: 'Rawline', fontWeight: FontWeight.w800)),
+            const Text('Exclusão em Lote',
+                style: TextStyle(
+                    fontFamily: 'Rawline', fontWeight: FontWeight.w800)),
           ],
         ),
         content: Text(
           'Tem certeza que deseja excluir $count ${count == 1 ? 'crachá selecionado' : 'crachás selecionados'}? Esta ação não pode ser desfeita.',
-          style: const TextStyle(fontFamily: 'Rawline', fontSize: 14, height: 1.4),
+          style:
+              const TextStyle(fontFamily: 'Rawline', fontSize: 14, height: 1.4),
         ),
         actions: [
           AppButton.text(
@@ -236,7 +245,8 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
       periodoData: _periodoData,
     );
 
-    final secretariasContagem = SavedBadgesFilter.secretariasComContagem(bm.badges);
+    final secretariasContagem =
+        SavedBadgesFilter.secretariasComContagem(bm.badges);
     final selectedIds = bm.selectedBadgeIds;
     final hasSelection = selectedIds.isNotEmpty;
 
@@ -252,7 +262,9 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
         actions: [
           IconButton(
             tooltip: _isTableView ? 'Ver em Grade' : 'Ver em Lista / Tabela',
-            icon: Icon(_isTableView ? Icons.grid_view_rounded : Icons.view_list_rounded),
+            icon: Icon(_isTableView
+                ? Icons.grid_view_rounded
+                : Icons.view_list_rounded),
             onPressed: () => setState(() => _isTableView = !_isTableView),
           ),
           IconButton(
@@ -308,10 +320,13 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                 // Alternador de Visualização (Grade / Lista Tabela)
                 Container(
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF14191F) : const Color(0xFFF1F5F9),
+                    color: isDark
+                        ? const Color(0xFF14191F)
+                        : const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(
-                      color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                      color:
+                          isDark ? AppColors.borderDark : AppColors.borderLight,
                       width: 1,
                     ),
                   ),
@@ -325,16 +340,22 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                           size: 18,
                           color: !_isTableView
                               ? primary
-                              : (isDark ? AppColors.mutedDark : AppColors.mutedLight),
+                              : (isDark
+                                  ? AppColors.mutedDark
+                                  : AppColors.mutedLight),
                         ),
                         onPressed: () {
-                          if (_isTableView) setState(() => _isTableView = false);
+                          if (_isTableView) {
+                            setState(() => _isTableView = false);
+                          }
                         },
                       ),
                       Container(
                         width: 1,
                         height: 20,
-                        color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                        color: isDark
+                            ? AppColors.borderDark
+                            : AppColors.borderLight,
                       ),
                       IconButton(
                         tooltip: 'Visualização em Lista / Tabela',
@@ -343,10 +364,14 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                           size: 18,
                           color: _isTableView
                               ? primary
-                              : (isDark ? AppColors.mutedDark : AppColors.mutedLight),
+                              : (isDark
+                                  ? AppColors.mutedDark
+                                  : AppColors.mutedLight),
                         ),
                         onPressed: () {
-                          if (!_isTableView) setState(() => _isTableView = true);
+                          if (!_isTableView) {
+                            setState(() => _isTableView = true);
+                          }
                         },
                       ),
                     ],
@@ -380,34 +405,45 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                         style: TextStyle(
                           fontFamily: 'Rawline',
                           fontSize: 13.5,
-                          color: isDark ? AppColors.textDark : AppColors.textLight,
+                          color:
+                              isDark ? AppColors.textDark : AppColors.textLight,
                         ),
                         decoration: InputDecoration(
-                          hintText: 'Buscar por nome do servidor, cargo ou secretaria...',
+                          hintText:
+                              'Buscar por nome do servidor, cargo ou secretaria...',
                           prefixIcon: Icon(
                             Icons.search_rounded,
-                            color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+                            color: isDark
+                                ? AppColors.mutedDark
+                                : AppColors.mutedLight,
                             size: 18,
                           ),
                           suffixIcon: _searchController.text.isNotEmpty
                               ? IconButton(
-                                  icon: const Icon(Icons.clear_rounded, size: 16),
+                                  icon:
+                                      const Icon(Icons.clear_rounded, size: 16),
                                   onPressed: () => _searchController.clear(),
                                 )
                               : null,
                           filled: true,
-                          fillColor: isDark ? AppColors.surfaceDark : Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          fillColor:
+                              isDark ? AppColors.surfaceDark : Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppRadius.md),
                             borderSide: BorderSide(
-                              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                              color: isDark
+                                  ? AppColors.borderDark
+                                  : AppColors.borderLight,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppRadius.md),
                             borderSide: BorderSide(
-                              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                              color: isDark
+                                  ? AppColors.borderDark
+                                  : AppColors.borderLight,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
@@ -418,13 +454,18 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                       ),
                     ),
                     if (filteredBadges.isNotEmpty &&
-                        selectedIds.length < bm.badges.length) ...[
+                        selectedIds.length < filteredBadges.length) ...[
                       const SizedBox(width: 8),
                       AppButton.secondary(
-                        label: 'Selecionar Todos',
+                        // "N visíveis" deixa explícito o que será marcado —
+                        // sem isso o número só aparecia depois, na barra de
+                        // lote, quando o dano já estava feito.
+                        label: filteredBadges.length == bm.badges.length
+                            ? 'Selecionar Todos'
+                            : 'Selecionar os ${filteredBadges.length} visíveis',
                         icon: Icons.select_all_rounded,
                         size: AppButtonSize.sm,
-                        onPressed: () => bm.selectAllBadges(),
+                        onPressed: () => bm.selectAllBadges(filteredBadges),
                       ),
                     ],
                     if (_temFiltrosAtivos) ...[
@@ -456,16 +497,19 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                           context,
                           contagem: secretariasContagem,
                           selecionada: _secretariaFiltro,
-                          onSelect: (val) => setState(() => _secretariaFiltro = val),
+                          onSelect: (val) =>
+                              setState(() => _secretariaFiltro = val),
                         ),
                       ),
                       const SizedBox(width: 8),
 
                       // Filtro Ordenação
                       _buildDropdownFilter<String>(
-                        label: 'Ordem: ${SavedBadgesOptions.ordenacaoLabels[_ordenacao]}',
+                        label:
+                            'Ordem: ${SavedBadgesOptions.ordenacaoLabels[_ordenacao]}',
                         icon: Icons.sort_rounded,
-                        isActive: _ordenacao != SavedBadgesOptions.ordenacaoPadrao,
+                        isActive:
+                            _ordenacao != SavedBadgesOptions.ordenacaoPadrao,
                         isDark: isDark,
                         primary: primary,
                         onTap: () => SavedBadgesSheets.showOptionsModal(
@@ -480,9 +524,11 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
 
                       // Filtro Período
                       _buildDropdownFilter<String>(
-                        label: 'Período: ${SavedBadgesOptions.periodoLabels[_periodoData]}',
+                        label:
+                            'Período: ${SavedBadgesOptions.periodoLabels[_periodoData]}',
                         icon: Icons.date_range_rounded,
-                        isActive: _periodoData != SavedBadgesOptions.periodoPadrao,
+                        isActive:
+                            _periodoData != SavedBadgesOptions.periodoPadrao,
                         isDark: isDark,
                         primary: primary,
                         onTap: () => SavedBadgesSheets.showOptionsModal(
@@ -491,6 +537,24 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                           options: SavedBadgesOptions.periodoLabels,
                           currentValue: _periodoData,
                           onSelect: (val) => setState(() => _periodoData = val),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Semantics(
+                        label:
+                            '${filteredBadges.length} de ${bm.badges.length} crachás encontrados',
+                        child: Text(
+                          '${filteredBadges.length} de ${bm.badges.length}',
+                          style: TextStyle(
+                            fontFamily: 'Rawline',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: _temFiltrosAtivos
+                                ? primary
+                                : (isDark
+                                    ? AppColors.mutedDark
+                                    : AppColors.mutedLight),
+                          ),
                         ),
                       ),
                     ],
@@ -505,10 +569,14 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkCardElevated : const Color(0xFFE8F5E9),
+                color: isDark
+                    ? AppColors.darkCardElevated
+                    : const Color(0xFFE8F5E9),
                 border: Border(
                   bottom: BorderSide(
-                    color: isDark ? AppColors.darkBorderHighlight : AppColors.mediumGreen,
+                    color: isDark
+                        ? AppColors.darkBorderHighlight
+                        : AppColors.mediumGreen,
                     width: 1,
                   ),
                 ),
@@ -534,7 +602,8 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                     size: AppButtonSize.sm,
                     onPressed: () {
                       final selectedList = bm.selectedBadges;
-                      MultiBadgePdfGenerator.generateMultipleBadgesPdf(selectedList, context);
+                      MultiBadgePdfGenerator.generateMultipleBadgesPdf(
+                          selectedList, context);
                     },
                   ),
                   const SizedBox(width: 8),
@@ -705,43 +774,50 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
   }
 
   // ── Grade Visual de Crachás ──
-  Widget _buildGridView(BuildContext context, List<BadgeData> badges, BadgeManager bm) {
-    final sw = MediaQuery.of(context).size.width;
-    int crossAxisCount = 1;
-    if (sw >= 1400) {
-      crossAxisCount = 4;
-    } else if (sw >= 1000) {
-      crossAxisCount = 3;
-    } else if (sw >= 640) {
-      crossAxisCount = 2;
-    }
+  Widget _buildGridView(
+      BuildContext context, List<BadgeData> badges, BadgeManager bm) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth - 40;
+        final columns = switch (availableWidth) {
+          >= 1500 => 5,
+          >= 1180 => 4,
+          >= 860 => 3,
+          >= 560 => 2,
+          _ => 1,
+        };
+        final cardWidth = (availableWidth - ((columns - 1) * 16)) / columns;
+        final cardHeight = cardWidth < 290 ? 430.0 : 370.0;
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(20),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 0.78,
-      ),
-      itemCount: badges.length,
-      itemBuilder: (context, index) {
-        final badge = badges[index];
-        final isSelected = bm.selectedBadgeIds.contains(badge.id);
-        return _BadgeCardGridItem(
-          badge: badge,
-          isSelected: isSelected,
-          onSelectToggle: () => bm.toggleBadgeSelection(badge.id),
-          onTap: () => _voltarParaEdicao(badge),
-          onDuplicate: () => _duplicar(badge),
-          onDelete: () => _confirmarExclusao(badge),
+        return GridView.builder(
+          padding: const EdgeInsets.all(20),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            mainAxisExtent: cardHeight,
+          ),
+          itemCount: badges.length,
+          itemBuilder: (context, index) {
+            final badge = badges[index];
+            final isSelected = bm.selectedBadgeIds.contains(badge.id);
+            return _BadgeCardGridItem(
+              badge: badge,
+              isSelected: isSelected,
+              onSelectToggle: () => bm.toggleBadgeSelection(badge.id),
+              onTap: () => _voltarParaEdicao(badge),
+              onDuplicate: () => _duplicar(badge),
+              onDelete: () => _confirmarExclusao(badge),
+            );
+          },
         );
       },
     );
   }
 
   // ── Tabela Compacta de Crachás ──
-  Widget _buildTableView(BuildContext context, List<BadgeData> badges, BadgeManager bm) {
+  Widget _buildTableView(
+      BuildContext context, List<BadgeData> badges, BadgeManager bm) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -763,10 +839,12 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                   : (isDark ? AppColors.darkBorder : AppColors.borderColor),
               width: isSelected ? 2 : 1,
             ),
-            boxShadow: isDark ? AppColors.darkShadowList : AppColors.defaultShadow,
+            boxShadow:
+                isDark ? AppColors.darkShadowList : AppColors.defaultShadow,
           ),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             leading: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -778,12 +856,16 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: badge.photo != null
-                      ? Image.memory(badge.photo!, width: 40, height: 48, fit: BoxFit.cover)
+                      ? Image.memory(badge.photo!,
+                          width: 40, height: 48, fit: BoxFit.cover)
                       : Container(
                           width: 40,
                           height: 48,
-                          color: isDark ? AppColors.darkSurfaceVariant : const Color(0xFFE2E8F0),
-                          child: const Icon(Icons.person, size: 22, color: Colors.grey),
+                          color: isDark
+                              ? AppColors.darkSurfaceVariant
+                              : const Color(0xFFE2E8F0),
+                          child: const Icon(Icons.person,
+                              size: 22, color: Colors.grey),
                         ),
                 ),
               ],
@@ -806,7 +888,9 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                     fontFamily: 'Rawline',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.subtitleColor,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.subtitleColor,
                   ),
                 ),
                 Text(
@@ -834,7 +918,8 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                 ),
                 IconButton(
                   tooltip: 'Excluir',
-                  icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.errorColor),
+                  icon: const Icon(Icons.delete_outline_rounded,
+                      size: 18, color: AppColors.errorColor),
                   onPressed: () => _confirmarExclusao(badge),
                 ),
               ],
@@ -848,7 +933,7 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
 }
 
 /// Item visual de crachá no Grid.
-class _BadgeCardGridItem extends StatelessWidget {
+class _BadgeCardGridItem extends StatefulWidget {
   final BadgeData badge;
   final bool isSelected;
   final VoidCallback onSelectToggle;
@@ -866,189 +951,317 @@ class _BadgeCardGridItem extends StatelessWidget {
   });
 
   @override
+  State<_BadgeCardGridItem> createState() => _BadgeCardGridItemState();
+}
+
+class _BadgeCardGridItemState extends State<_BadgeCardGridItem> {
+  bool _hovered = false;
+  bool _focused = false;
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primary = theme.colorScheme.primary;
-    final dateStr = DateFormat('dd/MM/yyyy HH:mm').format(badge.updatedAt);
+    final dateStr =
+        DateFormat('dd/MM/yyyy HH:mm').format(widget.badge.updatedAt);
+    final interactive = _hovered || _focused || widget.isSelected;
+    final cardLabel = widget.badge.name.isEmpty
+        ? 'Crachá sem nome'
+        : 'Crachá de ${widget.badge.name}';
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkCard : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? primary
-                : (isDark ? AppColors.darkBorder : AppColors.borderColor),
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: isDark ? AppColors.darkShadowList : AppColors.defaultShadow,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Topo do Card: Seleção + Miniatura
-            Expanded(
-              child: Stack(
+    return Semantics(
+      button: true,
+      label: 'Abrir $cardLabel',
+      hint: 'Clique para editar o crachá',
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: Focus(
+          canRequestFocus: true,
+          onFocusChange: (focused) => setState(() => _focused = focused),
+          child: InkWell(
+            onTap: widget.onTap,
+            borderRadius: BorderRadius.circular(16),
+            hoverColor: primary.withValues(alpha: 0.04),
+            focusColor: primary.withValues(alpha: 0.06),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                color: widget.isSelected
+                    ? primary.withValues(alpha: isDark ? 0.10 : 0.05)
+                    : (isDark ? AppColors.darkCard : Colors.white),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: widget.isSelected
+                      ? primary
+                      : interactive
+                          ? primary.withValues(alpha: 0.55)
+                          : (isDark
+                              ? AppColors.darkBorder
+                              : AppColors.borderColor),
+                  width: widget.isSelected ? 2 : 1,
+                ),
+                boxShadow:
+                    isDark ? AppColors.darkShadowList : AppColors.defaultShadow,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Fundo Studio com foto/miniatura
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      gradient: isDark
-                          ? LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [AppColors.darkStudioBackdrop, AppColors.darkSurface],
-                            )
-                          : LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [AppColors.studioBackdrop, AppColors.surfaceLight],
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            gradient: isDark
+                                ? const LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      AppColors.darkStudioBackdrop,
+                                      AppColors.darkSurface
+                                    ],
+                                  )
+                                : const LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      AppColors.studioBackdrop,
+                                      AppColors.surfaceLight
+                                    ],
+                                  ),
+                            borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(15)),
+                          ),
+                          child: Center(
+                            child: Container(
+                              height: 190,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(6),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.15),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: AspectRatio(
+                                aspectRatio: 54 / 85,
+                                child: IgnorePointer(
+                                  child: FittedBox(
+                                    fit: BoxFit.contain,
+                                    child: BadgeView(
+                                      badgeData: widget.badge,
+                                      onImageTap: () {},
+                                      onNameTap: () {},
+                                      onRoleTap: () {},
+                                      onDepartmentTap: () {},
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          left: 8,
+                          child: Semantics(
+                            button: true,
+                            selected: widget.isSelected,
+                            label:
+                                '${widget.isSelected ? 'Desmarcar' : 'Selecionar'} $cardLabel',
+                            child: Tooltip(
+                              message: widget.isSelected
+                                  ? 'Desmarcar crachá'
+                                  : 'Selecionar crachá',
+                              child: InkWell(
+                                onTap: widget.onSelectToggle,
+                                borderRadius: BorderRadius.circular(8),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 160),
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: widget.isSelected
+                                        ? primary
+                                        : (isDark
+                                            ? Colors.black
+                                                .withValues(alpha: 0.38)
+                                            : Colors.white
+                                                .withValues(alpha: 0.90)),
+                                    shape: BoxShape.rectangle,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: widget.isSelected
+                                          ? primary
+                                          : (isDark
+                                              ? AppColors.borderHighlightDark
+                                              : AppColors.borderHighlightLight),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.check_rounded,
+                                    size: 19,
+                                    color: widget.isSelected
+                                        ? Colors.white
+                                        : Colors.transparent,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (interactive)
+                          Positioned(
+                            top: 10,
+                            right: 10,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.black.withValues(alpha: 0.42)
+                                    : Colors.white.withValues(alpha: 0.88),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(Icons.open_in_new_rounded,
+                                  size: 16, color: primary),
+                            ),
+                          ),
+                      ],
                     ),
-                    child: Center(
-                      child: Container(
-                        height: 150,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(6),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.15),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          widget.badge.name.isEmpty
+                              ? 'SEM NOME'
+                              : widget.badge.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontFamily: 'Rawline',
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w800,
+                            height: 1.05,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.badge.role.isEmpty
+                              ? 'Cargo não informado'
+                              : widget.badge.role,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'Rawline',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.subtitleColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.badge.department.isEmpty
+                              ? 'Secretaria não informada'
+                              : widget.badge.department,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'Rawline',
+                            fontSize: 11,
+                            height: 1.15,
+                            color: isDark
+                                ? AppColors.darkHint
+                                : AppColors.mutedColor,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                dateStr,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: 'Rawline',
+                                  fontSize: 10.5,
+                                  color: isDark
+                                      ? AppColors.darkHint
+                                      : AppColors.mutedColor,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _GridActionButton(
+                                  icon: Icons.copy_rounded,
+                                  tooltip: 'Duplicar ${widget.badge.name}',
+                                  onPressed: widget.onDuplicate,
+                                ),
+                                const SizedBox(width: 4),
+                                _GridActionButton(
+                                  icon: Icons.delete_outline_rounded,
+                                  tooltip: 'Excluir ${widget.badge.name}',
+                                  color: AppColors.errorColor,
+                                  onPressed: widget.onDelete,
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                        child: AspectRatio(
-                          aspectRatio: 54 / 85,
-                          child: FittedBox(
-                            fit: BoxFit.contain,
-                            child: BadgeView(
-                              badgeData: badge,
-                              onImageTap: () {},
-                              onNameTap: () {},
-                              onRoleTap: () {},
-                              onDepartmentTap: () {},
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Checkbox de Seleção Rápida
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: InkWell(
-                      onTap: onSelectToggle,
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: isSelected ? primary : Colors.white.withValues(alpha: 0.85),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isSelected ? primary : Colors.grey.shade400,
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.check,
-                          size: 14,
-                          color: isSelected ? Colors.white : Colors.transparent,
-                        ),
-                      ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
-            // Informações do Servidor
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    badge.name.isEmpty ? 'SEM NOME' : badge.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: 'Rawline',
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    badge.role.isEmpty ? 'Cargo não informado' : badge.role,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: 'Rawline',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.subtitleColor,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    badge.department,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: 'Rawline',
-                      fontSize: 11,
-                      color: isDark ? AppColors.darkHint : AppColors.mutedColor,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        dateStr,
-                        style: TextStyle(
-                          fontFamily: 'Rawline',
-                          fontSize: 10.5,
-                          color: isDark ? AppColors.darkHint : AppColors.mutedColor,
-                        ),
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.copy_rounded, size: 16),
-                            tooltip: 'Duplicar',
-                            constraints: const BoxConstraints(),
-                            padding: const EdgeInsets.all(4),
-                            onPressed: onDuplicate,
-                          ),
-                          const SizedBox(width: 4),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline_rounded, size: 16, color: AppColors.errorColor),
-                            tooltip: 'Excluir',
-                            constraints: const BoxConstraints(),
-                            padding: const EdgeInsets.all(4),
-                            onPressed: onDelete,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+class _GridActionButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+  final Color? color;
+
+  const _GridActionButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 17, color: color),
+        constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+        padding: const EdgeInsets.all(8),
+        style: IconButton.styleFrom(
+          foregroundColor: color,
+          minimumSize: const Size(40, 40),
+          tapTargetSize: MaterialTapTargetSize.padded,
         ),
       ),
     );

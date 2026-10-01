@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/badge_data.dart';
+import '../models/department.dart';
 
 /// Falha de rede/servidor na nuvem — a fila de retry deve reprocessar.
 /// Permissão negada (RLS) NÃO vira isto: retry não conserta RLS.
@@ -153,7 +154,8 @@ class BadgeCloudService {
   static Future<List<BadgeData>> fetchBadges() async {
     final rows = await _client
         .from('crachas')
-        .select('id, nome, cargo, secretaria, foto_path, created_at, updated_at')
+        .select(
+            'id, nome, cargo, secretaria, foto_path, created_at, updated_at')
         .order('updated_at', ascending: false);
 
     final badges = <BadgeData>[];
@@ -162,7 +164,9 @@ class BadgeCloudService {
       final map = row as Map<String, dynamic>;
       badges.add(_fromRow(map));
       final path = map['foto_path'] as String?;
-      if (path != null && path.isNotEmpty) photoPaths[map['id'] as String] = path;
+      if (path != null && path.isNotEmpty) {
+        photoPaths[map['id'] as String] = path;
+      }
     }
 
     await _downloadPhotos(badges, photoPaths);
@@ -207,7 +211,9 @@ class BadgeCloudService {
       id: map['id'] as String,
       name: (map['nome'] ?? '') as String,
       role: (map['cargo'] ?? '') as String,
-      department: (map['secretaria'] ?? '') as String,
+      department: Department.migrateLegacyName(
+        (map['secretaria'] as String?) ?? '',
+      ),
       photo: photoBytes,
       createdAt: DateTime.tryParse(map['created_at'] ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(map['updated_at'] ?? '') ?? DateTime.now(),

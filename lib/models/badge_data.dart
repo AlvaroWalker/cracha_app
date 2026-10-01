@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'department.dart';
+
 /// Tipos de erro de validação do crachá.
 enum BadgeValidationError {
   nameRequired,
@@ -51,7 +53,7 @@ class BadgeData {
     String? id,
     this.name = "",
     this.role = "",
-    this.department = "SECRETARIA MUNICIPAL DE EDUCAÇÃO",
+    this.department = "",
     this.photo,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -93,7 +95,8 @@ class BadgeData {
   }
 
   /// Retorna true se o crachá é válido.
-  bool isValid({List<String>? validDepartments}) => validate(validDepartments: validDepartments).isEmpty;
+  bool isValid({List<String>? validDepartments}) =>
+      validate(validDepartments: validDepartments).isEmpty;
 
   Map<String, dynamic> toMap() {
     return {
@@ -132,7 +135,9 @@ class BadgeData {
       id: map['id'],
       name: name.toUpperCase(),
       role: role.toUpperCase(),
-      department: map['department'],
+      department: Department.migrateLegacyName(
+        (map['department'] as String?) ?? '',
+      ),
       photo: map['photo'] != null ? base64Decode(map['photo']) : null,
       createdAt: DateTime.parse(map['createdAt']),
       updatedAt: DateTime.parse(map['updatedAt']),
