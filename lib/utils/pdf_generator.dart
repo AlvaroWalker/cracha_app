@@ -6,6 +6,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../models/badge_data.dart';
+import 'pdf_reference_page.dart';
 
 class PdfGenerator {
   static Future<void> generateAndSharePdf(GlobalKey key, BuildContext context,
@@ -153,6 +154,9 @@ class PdfGenerator {
           ),
         ),
       );
+
+      // Folha de referência da gráfica como última página.
+      await appendReferencePage(pdf);
 
       // Salva o PDF
       updateProgress(0.8, 'Finalizando o documento...');
@@ -312,6 +316,7 @@ class PdfGenerator {
         ),
       ),
     );
+    await appendReferencePage(pdf);
     return pdf.save();
   }
 }

@@ -40,6 +40,7 @@ import 'package:printing/printing.dart';
 
 import '../models/badge_data.dart';
 import '../views/badge_design.dart';
+import 'pdf_reference_page.dart';
 
 class MultiBadgeImagePdfGenerator {
   /// Largura lógica do palco em px.
@@ -185,6 +186,10 @@ class MultiBadgeImagePdfGenerator {
 
       progressValue.value = 0.95;
       progressText.value = 'Finalizando o documento...';
+
+      // Folha de referência da gráfica como ÚLTIMA página, depois de todos
+      // os crachás. Ver pdf_reference_page.dart.
+      await appendReferencePage(pdf);
 
       final pdfBytes = await pdf.save();
 

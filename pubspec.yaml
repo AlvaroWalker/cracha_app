@@ -37,6 +37,7 @@ flutter:
     - assets/brasao.png
     - assets/images/CRACHA.png
     - assets/images/placeholder.png
+    - assets/images/IMG-EX.jpg   # folha de referência da gráfica (última página do PDF)
     - assets/data/servidores.csv
 
   fonts:

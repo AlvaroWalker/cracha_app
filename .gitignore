@@ -48,3 +48,6 @@ app.*.map.json
 /.wrangler/
 /.freebuff/
 /.hermes/
+
+# artefatos de teste (PDFs gerados para verificacao externa)
+test/_out_*.pdf
