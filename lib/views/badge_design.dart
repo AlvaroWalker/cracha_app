@@ -16,6 +16,7 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
+import 'badge_view_canvas.dart' as canvas;
 import '../models/badge_data.dart';
 
 /// Geometria do crachá — espelha a arte `assets/images/CRACHA.png`
@@ -79,32 +80,27 @@ class BadgeTextStyles {
 }
 
 /// Palco padrão do crachá: captura via [globalKey] + redução uniforme.
+/// Palco do crachá para o preview.
 ///
-/// Espelha o repo funcional — o crachá NUNCA é cortado, só reduzido.
+/// DELEGADO a [badge_view_canvas.dart]. Antes este arquivo tinha uma cópia
+/// própria com `FittedBox`, e `preview_panel.dart` importando `badge_design`
+/// direto continuava usando a cópia velha — o `FittedBox` passa restrições
+/// infinitas ao `CustomPaint` e o Flutter reclamava
+/// "BoxConstraints forces an infinite width and infinite height".
+///
+/// Delegar elimina a duplicação: só existe uma implementação do palco, e o
+/// gerador vetorial e o preview usam a mesma.
 Widget buildBadgeStage({
   required GlobalKey globalKey,
   required BadgeData badge,
   required double boxWidth,
   required VoidCallback onImageTap,
 }) {
-  return RepaintBoundary(
-    key: globalKey,
-    child: SizedBox(
-      width: boxWidth.clamp(
-        BadgeGeometry.stageMinWidth,
-        BadgeGeometry.stageMaxWidth,
-      ),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: BadgeView(
-          badgeData: badge,
-          onImageTap: onImageTap,
-          onNameTap: () {},
-          onRoleTap: () {},
-          onDepartmentTap: () {},
-        ),
-      ),
-    ),
+  return canvas.buildBadgeStage(
+    globalKey: globalKey,
+    badge: badge,
+    boxWidth: boxWidth,
+    onImageTap: onImageTap,
   );
 }
 

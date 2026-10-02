@@ -49,5 +49,5 @@ app.*.map.json
 /.freebuff/
 /.hermes/
 
-# artefatos de teste (PDFs gerados para verificacao externa)
+# PDFs de teste, todos consumidos por tool/verify_pdf_text.py
 test/_out_*.pdf

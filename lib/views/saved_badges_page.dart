@@ -9,7 +9,7 @@ import '../services/badge_manager.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_snackbar.dart';
 import '../utils/app_tokens.dart';
-import '../utils/multi_badge_image_pdf_generator.dart';
+import '../utils/multi_badge_vector_pdf_generator.dart';
 import 'app_button.dart';
 import 'badge_view.dart';
 import 'saved_badges_empty_state.dart';
@@ -612,17 +612,12 @@ class _SavedBadgesPageState extends State<SavedBadgesPage> {
                     icon: Icons.picture_as_pdf_rounded,
                     size: AppButtonSize.sm,
                     onPressed: () {
-                      final selectedList = bm.selectedBadges;
-                      // Imagem 300 DPI, não vetorial: o `dart_pdf` e o Skia
-                      // discordam a caixa da fonte em 37.6% (hhea vs OS/2
-                      // typo), o que fazia o texto quebrar em silêncio —
-                      // palavra órfã, secretaria inteira descartada. Montando
-                      // o BadgeView e capturando, quem decide o layout é o
-                      // Skia, o mesmo do preview. Ver
-                      // multi_badge_image_pdf_generator.dart.
-                      MultiBadgeImagePdfGenerator.generateMultipleBadgesPdf(
-                          selectedList, context);
-                    },
+                          final selectedList = bm.selectedBadges;
+                          // PDF vetorial: texto selecionável, sem etapa capaz de
+                          // cortar. O mesmo [CrachaLayout] que desenha o preview
+                          // decide as quebras, então o PDF e a tela não divergem.
+                          MultiBadgeVectorPdfShare.share(selectedList, context);
+                        },
                   ),
                   const SizedBox(width: 8),
                   // Excluir Selecionados
@@ -1055,6 +1050,12 @@ class _BadgeCardGridItemState extends State<_BadgeCardGridItem> {
                           ),
                           child: Center(
                             child: Container(
+                              // Largura E altura: o `BadgeView` desenha por
+                              // `CustomPaint`, que precisa de tamanho finito.
+                              // Só a altura (190) deixava a largura livre, e o
+                              // `CustomPaint` reclamava
+                              // "BoxConstraints forces an infinite width".
+                              width: 190 * 54 / 85,
                               height: 190,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(6),
@@ -1066,19 +1067,13 @@ class _BadgeCardGridItemState extends State<_BadgeCardGridItem> {
                                   ),
                                 ],
                               ),
-                              child: AspectRatio(
-                                aspectRatio: 54 / 85,
-                                child: IgnorePointer(
-                                  child: FittedBox(
-                                    fit: BoxFit.contain,
-                                    child: BadgeView(
-                                      badgeData: widget.badge,
-                                      onImageTap: () {},
-                                      onNameTap: () {},
-                                      onRoleTap: () {},
-                                      onDepartmentTap: () {},
-                                    ),
-                                  ),
+                              child: IgnorePointer(
+                                child: BadgeView(
+                                  badgeData: widget.badge,
+                                  onImageTap: () {},
+                                  onNameTap: () {},
+                                  onRoleTap: () {},
+                                  onDepartmentTap: () {},
                                 ),
                               ),
                             ),

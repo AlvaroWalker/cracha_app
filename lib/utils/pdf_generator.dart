@@ -6,9 +6,61 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../models/badge_data.dart';
+import '../views/badge_assets.dart';
+import '../views/badge_geometry.dart' show CrachaDados, FotoAjuste;
+import 'cracha_vector_pdf_service.dart';
 import 'pdf_reference_page.dart';
 
 class PdfGenerator {
+  /// Gera o PDF vetorial de um crachá (usado pelo botão de exportar).
+  ///
+  /// Encaminha para [CrachaVectorPdfService], que resolve o layout com o
+  /// Skia e desenha o texto como vetor — sem `pw.Text`, sem `pw.Column`,
+  /// sem nada que possa descartar uma linha.
+  static Future<Uint8List> gerarVetorial(BadgeData badge) async {
+    // `await` nos dois: o serviço recebe `ui.Image`, mas o cache devolve o
+    // Future memoizado. Sem o await o compilador rejeita — e sem ele o PDF
+    // receberia um Future no lugar da imagem.
+    final fundo = await fundoDoCracha();
+    final foto = await fotoDoBadge(badge) ?? await fotoPadrao();
+
+    return CrachaVectorPdfService.gerar(
+      dados: CrachaDados(
+        nome: badge.name.trim().isEmpty ? 'NOME DO SERVIDOR' : badge.name.trim(),
+        cargo: badge.role.trim().isEmpty ? 'CARGO DO SERVIDOR' : badge.role.trim(),
+        secretaria: badge.department.trim().isEmpty
+            ? 'SECRETARIA'
+            : badge.department.trim(),
+      ),
+      ajuste: const FotoAjuste(),
+      fundo: fundo,
+      foto: foto,
+    );
+  }
+
+  /// Nome do arquivo: "Nome - Secretaria.pdf", sanitizado.
+  static String _filenameFor(BadgeData badge) {
+    final nome = badge.name.trim();
+    final dept = badge.department.trim();
+
+    String sanitize(String s) => s
+        .replaceAll('/', '-')
+        .replaceAll('\\', '-')
+        .replaceAll(':', '-')
+        .replaceAll('*', '-')
+        .replaceAll('?', '-')
+        .replaceAll('"', '-')
+        .replaceAll('<', '-')
+        .replaceAll('>', '-')
+        .replaceAll('|', '-');
+
+    if (nome.isNotEmpty && dept.isNotEmpty) {
+      return '${sanitize(nome)} - ${sanitize(dept)}.pdf';
+    }
+    if (nome.isNotEmpty) return '${sanitize(nome)}.pdf';
+    if (dept.isNotEmpty) return '${sanitize(dept)}.pdf';
+    return 'cracha.pdf';
+  }
   static Future<void> generateAndSharePdf(GlobalKey key, BuildContext context,
       {BadgeData? badgeData}) async {
     // Controlador para atualizar o progresso
@@ -99,112 +151,30 @@ class PdfGenerator {
     );
 
     try {
-      // Adiciona um pequeno delay para garantir que o diálogo seja exibido
-      await Future.delayed(const Duration(milliseconds: 100));
+          // PDF VETORIAL: fundo+foto raster, texto vetorial. Ver
+          // `cracha_vector_pdf_service.dart`.
+          //
+          // Não precisa mais do RepaintBoundary: o layout vem do `CrachaLayout`
+          // (medido com o Skia) e o texto sai como `drawString`. `key` fica no
+          // contrato porque [buildBadgePdfBytes] ainda usa.
+          updateProgress(0.3, 'Preparando o documento...');
+          await Future.delayed(const Duration(milliseconds: 200));
 
-      // Captura a imagem do widget
-      updateProgress(0.2, 'Capturando a imagem do crachá...');
-      await Future.delayed(const Duration(milliseconds: 300));
+          final alvo = badgeData ?? BadgeData();
+          final pdfBytes = await gerarVetorial(alvo);
 
-      // Espera até que o RepaintBoundary esteja disponível
-      RenderRepaintBoundary? boundary;
-      for (int i = 0; i < 20; i++) {
-        final ctx = key.currentContext;
-        if (ctx != null && ctx.mounted) {
-          final ro = ctx.findRenderObject();
-          if (ro is RenderRepaintBoundary) {
-            boundary = ro;
-            break;
+          updateProgress(1.0, 'PDF gerado com sucesso!');
+          await Future.delayed(const Duration(milliseconds: 400));
+
+          if (context.mounted) {
+            Navigator.of(context, rootNavigator: true).pop();
           }
-        }
-        await Future.delayed(const Duration(milliseconds: 100));
-      }
 
-      if (boundary == null) {
-        throw Exception('Não foi possível capturar o crachá. Tente novamente.');
-      }
-
-      // 300 DPI: pixel lógico web = 1/96in → pixelRatio 300/96 = 3.125.
-      // Pior caso (palco mobile 220px) ainda sai a ~323 DPI no impresso.
-      const exportPixelRatio = 300 / 96;
-      final ui.Image image =
-          await boundary.toImage(pixelRatio: exportPixelRatio);
-
-      updateProgress(0.4, 'Processando a imagem...');
-      await Future.delayed(const Duration(milliseconds: 200));
-
-      final ByteData? byteData =
-          await image.toByteData(format: ui.ImageByteFormat.png);
-      final Uint8List imageBytes = byteData!.buffer.asUint8List();
-
-      // Cria o documento PDF
-      updateProgress(0.6, 'Gerando o documento PDF...');
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      final pdf = pw.Document();
-
-      pdf.addPage(
-        pw.Page(
-          pageFormat: PdfPageFormat(54 * (72 / 25.4), 85 * (72 / 25.4)),
-          // COVER (não contain): a captura preserva a proporção do crachá
-          // (1.569) e o contain encolhia para 83.1mm; cover preenche 54×85
-          // exatos cortando ~0.15mm de margem branca invisível.
-          build: (context) => pw.Center(
-            child: pw.Image(pw.MemoryImage(imageBytes), fit: pw.BoxFit.cover),
-          ),
-        ),
-      );
-
-      // Folha de referência da gráfica como última página.
-      await appendReferencePage(pdf);
-
-      // Salva o PDF
-      updateProgress(0.8, 'Finalizando o documento...');
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      final Uint8List pdfBytes = await pdf.save();
-
-      // Define o nome do arquivo baseado no nome e secretaria do usuário
-      String filename = 'cracha.pdf';
-      if (badgeData != null) {
-        String name = badgeData.name.trim();
-        String department = badgeData.department.trim();
-
-        // Sanitiza: remove caracteres inválidos para filename
-        String sanitize(String s) => s
-            .replaceAll('/', '-')
-            .replaceAll('\\', '-')
-            .replaceAll(':', '-')
-            .replaceAll('*', '-')
-            .replaceAll('?', '-')
-            .replaceAll('"', '-')
-            .replaceAll('<', '-')
-            .replaceAll('>', '-')
-            .replaceAll('|', '-');
-
-        if (name.isNotEmpty && department.isNotEmpty) {
-          filename = '${sanitize(name)} - ${sanitize(department)}.pdf';
-        } else if (name.isNotEmpty) {
-          filename = '${sanitize(name)}.pdf';
-        } else if (department.isNotEmpty) {
-          filename = '${sanitize(department)}.pdf';
-        }
-      }
-
-      updateProgress(1.0, 'PDF gerado com sucesso!');
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      // Fecha o diálogo de loading
-      if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
-      }
-
-      // Compartilha o PDF com o nome personalizado
-      await Printing.sharePdf(
-        bytes: pdfBytes,
-        filename: filename,
-      );
-    } catch (e) {
+          await Printing.sharePdf(
+            bytes: pdfBytes,
+            filename: _filenameFor(alvo),
+          );
+        } catch (e) {
       // Fecha o diálogo de loading em caso de erro
       if (context.mounted) {
         Navigator.of(context, rootNavigator: true).pop();
